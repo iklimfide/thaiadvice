@@ -1,0 +1,10 @@
+---
+description: Deploy talimatı olmadan production build çalıştırma
+alwaysApply: true
+---
+
+# Build ve deploy
+
+- **`npm run build`**, **`next build`** veya eşdeğer production build komutlarını **kullanıcı açıkça deploy / build talimatı vermeden çalıştırma**.
+- Yerel doğrulama gerekiyorsa önce kullanıcıya sor veya yalnızca **`npm run lint`**, tip kontrolü veya kullanıcının izin verdiği hafif komutları tercih et.
+- Kullanıcı deploy veya “build çalıştır” dediğinde build çalıştırılabilir.

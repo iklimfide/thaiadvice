@@ -1,0 +1,113 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --ribbon-skew: -12deg;
+  /* tailwind theme.colors.brand.DEFAULT ile aynı — üst bar zemin */
+  --header-bar-bg: #6d28d9;
+}
+
+body {
+  @apply bg-zinc-50 text-zinc-900 antialiased;
+}
+
+@layer utilities {
+  .ribbon-skew {
+    transform: skewX(var(--ribbon-skew));
+  }
+  .ribbon-unskew {
+    transform: skewX(calc(-1 * var(--ribbon-skew)));
+  }
+}
+
+/* Makale / mekân detay: iki yana yaslama + gömülü HTML başlıkları (gelecek / içerikte h2–h4 varsa) */
+@layer components {
+  .article-detail-body {
+    @apply hyphens-auto text-justify text-pretty text-zinc-700;
+  }
+
+  .article-detail-body h2 {
+    @apply mb-3 mt-10 border-b-2 border-brand/25 pb-2 font-serif text-xl font-bold tracking-tight text-zinc-900 sm:text-2xl;
+    text-align: start;
+  }
+
+  .article-detail-body h3 {
+    @apply mb-2 mt-8 font-serif text-lg font-bold text-zinc-900 sm:text-xl;
+    text-align: start;
+  }
+
+  .article-detail-body h4 {
+    @apply mb-2 mt-6 text-base font-bold uppercase tracking-wide text-zinc-800;
+    text-align: start;
+  }
+
+  .article-detail-body h2:first-child,
+  .article-detail-body h3:first-child,
+  .article-detail-body h4:first-child {
+    @apply mt-4;
+  }
+
+  .article-detail-body p {
+    @apply mb-4 last:mb-0;
+  }
+
+  .article-detail-body ul,
+  .article-detail-body ol {
+    @apply my-4 list-outside space-y-1 pl-6;
+    text-align: start;
+  }
+
+  .article-detail-body ul {
+    list-style-type: disc;
+  }
+
+  .article-detail-body ol {
+    list-style-type: decimal;
+  }
+
+  .article-detail-body li {
+    @apply pl-1;
+  }
+
+  .article-detail-body a {
+    @apply font-medium text-brand underline decoration-brand/40 underline-offset-2 hover:decoration-brand;
+  }
+
+  .article-detail-body strong {
+    @apply font-semibold text-zinc-900;
+  }
+
+  .article-detail-body code {
+    @apply rounded bg-zinc-200/80 px-1.5 py-0.5 font-mono text-[0.9em] text-zinc-800;
+  }
+
+  .article-detail-body pre {
+    @apply my-4 overflow-x-auto rounded-lg border border-zinc-200 bg-zinc-100 p-4 text-start text-sm text-zinc-800;
+  }
+
+  .article-detail-body pre code {
+    @apply bg-transparent p-0 text-sm;
+  }
+
+  .article-detail-body blockquote {
+    @apply my-4 border-l-4 border-brand/30 pl-4 text-start italic text-zinc-600;
+  }
+
+  .article-detail-body table {
+    @apply my-4 w-full border-collapse text-start text-sm;
+  }
+
+  .article-detail-body th,
+  .article-detail-body td {
+    @apply border border-zinc-200 px-3 py-2 align-top;
+  }
+
+  .article-detail-body th {
+    @apply bg-zinc-100 font-semibold text-zinc-900;
+  }
+
+  .article-detail-body hr {
+    @apply my-8 border-t border-zinc-200;
+  }
+}

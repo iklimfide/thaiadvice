@@ -1,0 +1,33 @@
+# Tayland'da ATM'den para çekerken 220 THB komisyon ödememek mümkün mü?
+
+## Tayland ATM Sistemi ve Sabit Komisyon Gerçeği
+
+Tayland’a ayak bastığınız anda en sık karşılaşacağınız masraf kalemi ATM komisyonlarıdır. Ülkedeki SCB (Sarı), Kasikorn (Yeşil), Bangkok Bank (Mavi) ve Krungsri (Sarı) gibi ana bankaların tamamı, uluslararası kart sahiplerinden işlem başına 220 THB tutarında sabit bir ücret tahsil eder. Bu ücret, bankanızın sizden aldığı yurt dışı kullanım ücretinden bağımsızdır. Yani Türkiye’deki veya Avrupa’daki bankanız "yurt dışı çekim ücretsiz" dese bile, Tayland’daki ATM makinesi bu 220 THB’yi bakiyenizden düşecektir. 
+
+Bu durum, küçük miktarlarda para çekmeyi mantıksız hale getirir. Örneğin, 1000 THB çekmek istediğinizde ödeyeceğiniz %22’lik bir komisyon oranıyla karşı karşıya kalırsınız. Bu nedenle, ATM kullanmak zorundaysanız her seferinde tek seferde çekilebilecek maksimum tutarı (genellikle 20.000 ile 30.000 THB arası) çekmek, işlem başına düşen maliyeti minimize etmenin en temel yoludur.
+
+## Komisyon Ödemeden Nakit Çekme Yöntemi: Banka Gişeleri
+
+Pek çok turistin bilmediği "gişeden nakit çekme" yöntemi, 220 THB ödemek istemeyenler için en yasal ve güvenli yoldur. Pasaportunuzla birlikte bir banka şubesine giderek "Cash Advance" işlemi yapmak istediğinizi belirtirseniz, çoğu banka (özellikle Bangkok Bank ve Kasikorn) bu sabit komisyonu talep etmeden işlemi gerçekleştirir. 
+
+Ancak bu yöntemin de kendi içinde kuralları vardır:
+1. Sadece mesai saatleri içinde işlem yapabilirsiniz.
+2. Bazı küçük şubeler bu işlemi yapmaya yanaşmayabilir veya sadece kendi müşterilerine hizmet verdiklerini söyleyebilirler.
+3. Kredi kartı kullanıyorsanız, bankanız bu işlemi "nakit avans" olarak değerlendirip kendi faiz oranlarını uygulayabilir. 
+
+Bu nedenle en sağlıklı yöntem, banka kartınız (debit card) ile büyük alışveriş merkezlerindeki banka şubelerini denemektir.
+
+## En Büyük Tuzak: DCC (Dinamik Kur Dönüştürme) Nedir?
+
+ATM ekranında karşınıza çıkan en sinsi soru şudur: "Continue with conversion?" veya "Accept conversion?". Bu soruya asla "YES" dememelisiniz. Eğer conversion (dönüştürme) teklifini kabul ederseniz, ATM size o anki piyasa kurundan çok daha düşük (genellikle %5-7 daha kötü) bir kur dayatır. 
+
+Her zaman "Without Conversion" veya "Decline Conversion" seçeneğini işaretleyin. Bu sayede kur çevrimi Tayland bankası tarafından değil, kendi bankanız ve Visa/Mastercard altyapısı tarafından daha adil oranlarla yapılır. Sadece bu küçük dikkatsizlik bile, 220 THB'lik komisyondan çok daha büyük bir paranın cebinizden çıkmasına neden olabilir.
+
+## Tayland'da Alternatif Ödeme Yöntemleri ve Kart Kullanımı
+
+2026 yılı itibarıyla Tayland'da nakit kullanımı hala çok yaygın olsa da, büyük marketlerde (7-Eleven, Big C, Lotus's) ve modern restoranlarda kredi kartı kullanımı yaygınlaşmıştır. 7-Eleven mağazalarında genellikle 200 THB üzeri alışverişlerde kredi kartı kabul edilmektedir. 
+
+Wise veya Revolut gibi dijital bankacılık çözümleri kullanıyorsanız, bu kartların içindeki bakiyeyi doğrudan THB'ye çevirip harcama yapmak kur farkından tasarruf etmenizi sağlar. Ancak bu kartlar da fiziksel ATM'ye girdiğinde yine o 220 THB komisyonla karşılaşacaktır. Bu yüzden en iyi strateji, mümkün olduğunca kartla ödeme yapmak ve nakit ihtiyacını tek seferde büyük meblağlar çekerek halletmektir.
+
+### Perlamare Analizi & Tavsiyesi
+> "Tayland'da para yönetimi bir matematik hesabıdır. **Perlamare tavsiyesi nettir:** Havalimanındaki ATM'lerden sadece ilk ulaşım masraflarınız için küçük bir miktar çekin. Asıl nakit ihtiyacınız için şehir merkezindeki 'SuperRich' (Turuncu veya Yeşil olanlar) döviz bürolarını kullanın; döviz bürolarının kurları ATM'den her zaman daha iyidir. Eğer mutlaka ATM kullanacaksanız, Krungsri (Sarı) bankasının makinelerini tercih edin; çünkü bu ATM'ler tek seferde 30.000 THB'ye kadar izin verirken diğerleri 20.000 THB'de kalır. 220 THB'yi bir kez ödeyin ama tam kapasite çekim yapın. Kılcal damarlarda kaybolmamak için yanınızda her zaman yedek bir miktar nakit USD veya EUR bulundurmayı da unutmayın."
