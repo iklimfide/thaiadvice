@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS public.sub_regions (
   name text NOT NULL,
   slug text NOT NULL,
   description text NOT NULL DEFAULT ''::text,
+  image text NOT NULL DEFAULT ''::text,
   CONSTRAINT sub_regions_pkey PRIMARY KEY (id),
   CONSTRAINT sub_regions_region_id_fkey FOREIGN KEY (region_id) REFERENCES public.regions(id)
 );

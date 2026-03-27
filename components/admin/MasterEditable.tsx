@@ -4,7 +4,11 @@ import {
   masterUpdatePlaceField,
   masterUpdateQuestionField,
   masterUpdateQuestionRelatedSlugs,
+  masterUpdateRegionField,
+  masterUpdateSubRegionField,
   masterUploadPlaceImage,
+  masterUploadRegionImage,
+  masterUploadSubRegionImage,
   type MasterInlineState,
 } from "@/lib/actions/master-inline";
 import {
@@ -26,7 +30,7 @@ type FieldType =
   | "rating";
 
 type Props = {
-  entity: "question" | "place";
+  entity: "question" | "place" | "region" | "sub_region";
   id: string;
   field: string;
   fieldType: FieldType;
@@ -78,6 +82,14 @@ export function MasterEditable({
     masterUpdatePlaceField,
     initialInline
   );
+  const [rState, rAction] = useFormState(
+    masterUpdateRegionField,
+    initialInline
+  );
+  const [regionUrlState, regionUrlAction] = useFormState(
+    masterUpdateRegionField,
+    initialInline
+  );
 
   const [imgUrlState, imgUrlAction] = useFormState(
     setQuestionImageUrl,
@@ -93,6 +105,22 @@ export function MasterEditable({
   );
   const [placeUpState, placeUpAction] = useFormState(
     masterUploadPlaceImage,
+    initialInline
+  );
+  const [regionUpState, regionUpAction] = useFormState(
+    masterUploadRegionImage,
+    initialInline
+  );
+  const [srState, srAction] = useFormState(
+    masterUpdateSubRegionField,
+    initialInline
+  );
+  const [subRegionUrlState, subRegionUrlAction] = useFormState(
+    masterUpdateSubRegionField,
+    initialInline
+  );
+  const [subRegionUpState, subRegionUpAction] = useFormState(
+    masterUploadSubRegionImage,
     initialInline
   );
 
@@ -291,6 +319,144 @@ export function MasterEditable({
               </div>
             ) : null}
 
+            {fieldType === "image" && entity === "region" ? (
+              <div className="mt-4 space-y-6">
+                <form action={regionUrlAction} className="space-y-2">
+                  <input type="hidden" name="id" value={id} />
+                  <input type="hidden" name="field" value="image" />
+                  <input type="hidden" name="storage_slug" value={slugForStorage} />
+                  <input type="hidden" name="pathname" value={pathname} />
+                  <input type="hidden" name="lang" value={lang} />
+                  <label className="text-sm font-medium">Görsel URL</label>
+                  <input
+                    name="value"
+                    type="url"
+                    defaultValue={initialValue}
+                    className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
+                  />
+                  <button
+                    type="submit"
+                    className="rounded-md bg-zinc-900 px-3 py-1.5 text-sm text-white"
+                  >
+                    URL kaydet
+                  </button>
+                  {regionUrlState.message ? (
+                    <p
+                      className={
+                        regionUrlState.ok
+                          ? "text-sm text-emerald-700"
+                          : "text-sm text-red-600"
+                      }
+                    >
+                      {regionUrlState.message}
+                    </p>
+                  ) : null}
+                </form>
+                <form
+                  action={regionUpAction}
+                  encType="multipart/form-data"
+                  className="space-y-2 border-t border-zinc-100 pt-4"
+                >
+                  <input type="hidden" name="id" value={id} />
+                  <input type="hidden" name="storage_slug" value={slugForStorage} />
+                  <input type="hidden" name="pathname" value={pathname} />
+                  <input type="hidden" name="lang" value={lang} />
+                  <label className="text-sm font-medium">Dosya yükle</label>
+                  <input
+                    name="file"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    className="block w-full text-sm"
+                  />
+                  <button
+                    type="submit"
+                    className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm"
+                  >
+                    Storage’a yükle
+                  </button>
+                  {regionUpState.message ? (
+                    <p
+                      className={
+                        regionUpState.ok ? "text-sm text-emerald-700" : "text-sm text-red-600"
+                      }
+                    >
+                      {regionUpState.message}
+                    </p>
+                  ) : null}
+                </form>
+              </div>
+            ) : null}
+
+            {fieldType === "image" && entity === "sub_region" ? (
+              <div className="mt-4 space-y-6">
+                <form action={subRegionUrlAction} className="space-y-2">
+                  <input type="hidden" name="id" value={id} />
+                  <input type="hidden" name="field" value="image" />
+                  <input type="hidden" name="storage_slug" value={slugForStorage} />
+                  <input type="hidden" name="pathname" value={pathname} />
+                  <input type="hidden" name="lang" value={lang} />
+                  <label className="text-sm font-medium">Görsel URL</label>
+                  <input
+                    name="value"
+                    type="url"
+                    defaultValue={initialValue}
+                    className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
+                  />
+                  <button
+                    type="submit"
+                    className="rounded-md bg-zinc-900 px-3 py-1.5 text-sm text-white"
+                  >
+                    URL kaydet
+                  </button>
+                  {subRegionUrlState.message ? (
+                    <p
+                      className={
+                        subRegionUrlState.ok
+                          ? "text-sm text-emerald-700"
+                          : "text-sm text-red-600"
+                      }
+                    >
+                      {subRegionUrlState.message}
+                    </p>
+                  ) : null}
+                </form>
+                <form
+                  action={subRegionUpAction}
+                  encType="multipart/form-data"
+                  className="space-y-2 border-t border-zinc-100 pt-4"
+                >
+                  <input type="hidden" name="id" value={id} />
+                  <input type="hidden" name="storage_slug" value={slugForStorage} />
+                  <input type="hidden" name="pathname" value={pathname} />
+                  <input type="hidden" name="lang" value={lang} />
+                  <label className="text-sm font-medium">Dosya yükle</label>
+                  <input
+                    name="file"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    className="block w-full text-sm"
+                  />
+                  <button
+                    type="submit"
+                    className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm"
+                  >
+                    Storage’a yükle
+                  </button>
+                  {subRegionUpState.message ? (
+                    <p
+                      className={
+                        subRegionUpState.ok
+                          ? "text-sm text-emerald-700"
+                          : "text-sm text-red-600"
+                      }
+                    >
+                      {subRegionUpState.message}
+                    </p>
+                  ) : null}
+                </form>
+              </div>
+            ) : null}
+
             {fieldType === "related_slugs" ? (
               <form action={relAction} className="mt-4 space-y-3">
                 <input type="hidden" name="id" value={id} />
@@ -388,7 +554,15 @@ export function MasterEditable({
 
             {fieldType === "text" || fieldType === "textarea" ? (
               <form
-                action={entity === "question" ? qAction : pAction}
+                action={
+                  entity === "question"
+                    ? qAction
+                    : entity === "region"
+                      ? rAction
+                      : entity === "sub_region"
+                        ? srAction
+                        : pAction
+                }
                 className="mt-4 space-y-3"
               >
                 <input type="hidden" name="id" value={id} />
@@ -419,15 +593,38 @@ export function MasterEditable({
                 >
                   Kaydet
                 </button>
-                {(entity === "question" ? qState : pState).message ? (
+                {(entity === "question"
+                  ? qState
+                  : entity === "region"
+                    ? rState
+                    : entity === "sub_region"
+                      ? srState
+                      : pState
+                ).message ? (
                   <p
                     className={
-                      (entity === "question" ? qState : pState).ok
+                      (entity === "question"
+                        ? qState
+                        : entity === "region"
+                          ? rState
+                          : entity === "sub_region"
+                            ? srState
+                            : pState
+                      ).ok
                         ? "text-sm text-emerald-700"
                         : "text-sm text-red-600"
                     }
                   >
-                    {(entity === "question" ? qState : pState).message}
+                    {
+                      (entity === "question"
+                        ? qState
+                        : entity === "region"
+                          ? rState
+                          : entity === "sub_region"
+                            ? srState
+                            : pState
+                      ).message
+                    }
                   </p>
                 ) : null}
               </form>

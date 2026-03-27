@@ -9,6 +9,10 @@ import {
   categorySlugForUrl,
 } from "@/lib/data/question-categories";
 import { formatPostDate } from "@/lib/format/date";
+import {
+  stripLeadingQuickAnswerBlockFromMarkdown,
+  stripQuickAnswerPrefix,
+} from "@/lib/format/faq-display";
 import type { QuestionRow } from "@/lib/types/database";
 
 type Props = {
@@ -122,11 +126,11 @@ export function PostCard({ lang, question, siteOrigin }: Props) {
         >
           {question.excerpt?.trim() ? (
             <p className="line-clamp-3 text-sm leading-relaxed text-zinc-600">
-              {question.excerpt}
+              {stripQuickAnswerPrefix(question.excerpt)}
             </p>
           ) : (
             <p className="line-clamp-3 text-sm leading-relaxed text-zinc-600">
-              {question.content}
+              {stripLeadingQuickAnswerBlockFromMarkdown(question.content)}
             </p>
           )}
         </MasterEditable>

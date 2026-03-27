@@ -14,6 +14,7 @@ export type SubRegionRow = {
   name: string;
   slug: string;
   description: string;
+  image: string;
 };
 
 export type PlaceRow = {

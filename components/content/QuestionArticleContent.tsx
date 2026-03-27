@@ -3,7 +3,10 @@ import { ArticleMarkdownBody } from "@/components/content/ArticleMarkdownBody";
 import { SafeHeroImageBox } from "@/components/ui/SafeImage";
 import { FaqSection } from "@/components/faq/FaqSection";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
+import { CategoryPageLink } from "@/components/ui/CategoryPageLink";
 import { categoryLabelForLang } from "@/lib/data/question-categories";
+import { displayRegionTitle } from "@/lib/format/display-names";
+import { stripQuickAnswerPrefix } from "@/lib/format/faq-display";
 import type { FaqEntryRow } from "@/lib/types/database";
 import type { QuestionRow } from "@/lib/types/database";
 import type { RegionRow } from "@/lib/types/database";
@@ -14,6 +17,10 @@ type Props = {
   region: RegionRow;
   question: QuestionRow;
   matchingSubRegion: SubRegionRow | null;
+  /** URL’deki kategori segmenti; breadcrumb ve kategori linki için */
+  articleCategorySlug: string;
+  /** Breadcrumb JSON-LD ve kısaltılmış satır için geçerli pathname */
+  pagePath: string;
   faq: FaqEntryRow[];
 };
 
@@ -22,6 +29,8 @@ export function QuestionArticleContent({
   region,
   question,
   matchingSubRegion,
+  articleCategorySlug,
+  pagePath,
   faq,
 }: Props) {
   const home = lang === "tr" ? "Ana sayfa" : "Home";
@@ -29,24 +38,25 @@ export function QuestionArticleContent({
     ? matchingSubRegion.name || matchingSubRegion.slug
     : categoryLabelForLang(question.category, lang);
 
+  const regionLabel = displayRegionTitle(region.name, region.slug, lang);
+  const categoryListHref = `/${lang}/${region.slug}/${matchingSubRegion?.slug ?? articleCategorySlug}`;
+
   const crumbs = [
     { label: home, href: `/${lang}` },
-    { label: region.name || region.slug, href: `/${lang}/${region.slug}` },
-    matchingSubRegion
-      ? {
-          label: categoryLabel,
-          href: `/${lang}/${region.slug}/${matchingSubRegion.slug}`,
-        }
-      : { label: categoryLabel },
+    { label: regionLabel, href: `/${lang}/${region.slug}` },
+    { label: categoryLabel, href: categoryListHref },
     { label: question.title },
   ];
 
   const hasImage = Boolean(question.image_url?.trim());
 
   return (
-    <article className="article-detail mx-auto w-full max-w-3xl px-0 sm:px-1">
-      <Breadcrumbs items={crumbs} />
-      <header className="mb-6 sm:mb-8">
+    <article
+      lang={lang === "tr" ? "tr" : "en"}
+      className="article-detail mx-auto w-full max-w-3xl px-0 sm:px-1"
+    >
+      <Breadcrumbs items={crumbs} pagePath={pagePath} />
+      <header className="mb-8 space-y-5 sm:mb-10 sm:space-y-7">
         <p className="flex flex-wrap items-center gap-x-2 text-xs font-semibold uppercase tracking-wider text-category">
           <MasterEditable
             entity="question"
@@ -56,7 +66,9 @@ export function QuestionArticleContent({
             label="Kategori (veritabanı değeri)"
             initialValue={question.category}
           >
-            <span>{categoryLabelForLang(question.category, lang)}</span>
+            <CategoryPageLink href={categoryListHref} className="shrink-0">
+              {categoryLabelForLang(question.category, lang)}
+            </CategoryPageLink>
           </MasterEditable>
           <span aria-hidden>·</span>
           <MasterEditable
@@ -77,9 +89,9 @@ export function QuestionArticleContent({
           fieldType="text"
           label="Başlık"
           initialValue={question.title}
-          wrapClassName="mt-2"
+          wrapClassName=""
         >
-          <h1 className="border-b-[3px] border-brand/35 pb-3 font-serif text-2xl font-bold leading-[1.15] tracking-tight text-zinc-900 sm:text-4xl sm:leading-tight">
+          <h1 className="border-b-[3px] border-brand/35 pb-4 font-serif text-2xl font-bold leading-[1.15] tracking-tight text-zinc-900 sm:pb-5 sm:text-4xl sm:leading-tight">
             {question.title}
           </h1>
         </MasterEditable>
@@ -90,11 +102,11 @@ export function QuestionArticleContent({
           fieldType="textarea"
           label="Özet (excerpt)"
           initialValue={question.excerpt ?? ""}
-          wrapClassName="mt-3"
+          wrapClassName=""
         >
           {question.excerpt?.trim() ? (
-            <p className="hyphens-auto text-pretty text-justify text-lg leading-relaxed text-zinc-600">
-              {question.excerpt}
+            <p className="article-detail-excerpt text-pretty text-justify text-lg leading-relaxed text-zinc-600">
+              {stripQuickAnswerPrefix(question.excerpt)}
             </p>
           ) : null}
         </MasterEditable>
@@ -109,7 +121,7 @@ export function QuestionArticleContent({
         initialValue={question.image_url ?? ""}
         storageSlug={question.slug}
         hasMedia={hasImage}
-        wrapClassName=""
+        wrapClassName="mt-6 sm:mt-8"
       >
         {hasImage ? (
           <SafeHeroImageBox
@@ -129,7 +141,7 @@ export function QuestionArticleContent({
         fieldType="textarea"
         label="İçerik"
         initialValue={question.content}
-        wrapClassName="w-full max-w-3xl"
+        wrapClassName="mt-6 w-full max-w-3xl sm:mt-8"
       >
         <ArticleMarkdownBody
           markdown={question.content ?? ""}
@@ -146,8 +158,14 @@ export function QuestionArticleContent({
         initialValue={question.region}
         wrapClassName="mt-6 text-xs text-zinc-500"
       >
-        <p>
-          <span className="text-zinc-400">Bölge:</span> {question.region}
+        <p className="flex flex-wrap items-baseline gap-x-1.5">
+          <span className="text-zinc-400">Bölge:</span>
+          <CategoryPageLink
+            href={`/${lang}/${region.slug}`}
+            className="text-sm font-semibold tracking-tight text-category hover:text-brand"
+          >
+            {displayRegionTitle(region.name, region.slug, lang)}
+          </CategoryPageLink>
         </p>
       </MasterEditable>
 

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { PlaceCard } from "@/components/cards/PlaceCard";
+import { SubRegionPageMasterHeader } from "@/components/content/SubRegionPageMasterHeader";
 import { FaqSection } from "@/components/faq/FaqSection";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { SectionTitle } from "@/components/ui/SectionTitle";
@@ -10,6 +11,7 @@ import {
   listFaqByCategory,
   listPlacesForSubRegion,
 } from "@/lib/data/queries";
+import { displayRegionTitle } from "@/lib/format/display-names";
 import { pageMetadata } from "@/lib/metadata/site";
 
 export const dynamic = "force-dynamic";
@@ -24,10 +26,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!region) return { title: "Bulunamadı" };
   const sub = await getSubRegionBySlug(region.id, subSlug);
   if (!sub) return { title: "Bulunamadı" };
+  const hasSubImage = Boolean(sub.image?.trim());
   return pageMetadata({
     title: sub.name || sub.slug,
     description: sub.description?.trim() || null,
-    image: null,
+    image: hasSubImage ? sub.image : null,
     path: `/${lang}/${region.slug}/${sub.slug}`,
   });
 }
@@ -45,9 +48,10 @@ export default async function SubRegionPage({ params }: Props) {
   ]);
 
   const home = lang === "tr" ? "Ana sayfa" : "Home";
+  const regionLabel = displayRegionTitle(region.name, region.slug, lang);
   const crumbs = [
     { label: home, href: `/${lang}` },
-    { label: region.name || region.slug, href: `/${lang}/${region.slug}` },
+    { label: regionLabel, href: `/${lang}/${region.slug}` },
     { label: sub.name || sub.slug },
   ];
 
@@ -56,17 +60,11 @@ export default async function SubRegionPage({ params }: Props) {
 
   return (
     <div>
-      <Breadcrumbs items={crumbs} />
-      <header className="mb-8 border-b border-zinc-200 pb-8">
-        <h1 className="font-serif text-3xl font-bold text-zinc-900 sm:text-4xl">
-          {sub.name || sub.slug}
-        </h1>
-        {sub.description?.trim() ? (
-          <p className="mt-3 max-w-2xl text-lg leading-relaxed text-zinc-600">
-            {sub.description}
-          </p>
-        ) : null}
-      </header>
+      <Breadcrumbs
+        items={crumbs}
+        pagePath={`/${lang}/${regionSlug}/${subSlug}`}
+      />
+      <SubRegionPageMasterHeader sub={sub} />
 
       <section className="mb-10">
         <SectionTitle>{placesTitle}</SectionTitle>

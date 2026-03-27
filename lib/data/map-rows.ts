@@ -40,6 +40,7 @@ export function mapSubRegionRow(raw: unknown): SubRegionRow {
     name: str(r.name),
     slug: str(r.slug),
     description: str(r.description),
+    image: str(r.image),
   };
 }
 

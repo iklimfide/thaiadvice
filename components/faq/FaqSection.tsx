@@ -1,4 +1,8 @@
 import { SectionTitle } from "@/components/ui/SectionTitle";
+import {
+  isFaqQuestionOnlyQuickAnswerLabel,
+  stripFaqQuickAnswerPrefix,
+} from "@/lib/format/faq-display";
 import type { FaqEntryRow } from "@/lib/types/database";
 
 type Props = {
@@ -17,14 +21,21 @@ export function FaqSection({ items, title = "SSS", detailLayout }: Props) {
         {title}
       </SectionTitle>
       <dl className="space-y-4">
-        {items.map((f) => (
+        {items.map((f) => {
+          const answer = stripFaqQuickAnswerPrefix(f.short_answer_text);
+          const hideQuestion = isFaqQuestionOnlyQuickAnswerLabel(f.question);
+          return (
           <div
             key={f.id}
             className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm transition hover:border-brand/25"
           >
-            <dt className="font-semibold text-zinc-900">{f.question}</dt>
-            <dd className="mt-2 hyphens-auto whitespace-pre-wrap text-justify text-sm leading-relaxed text-zinc-600 text-pretty">
-              {f.short_answer_text}
+            {hideQuestion ? null : (
+              <dt className="font-semibold text-zinc-900">{f.question}</dt>
+            )}
+            <dd
+              className={`hyphens-manual whitespace-pre-wrap text-justify text-sm leading-relaxed text-zinc-600 text-pretty ${hideQuestion ? "" : "mt-2"}`}
+            >
+              {answer}
             </dd>
             {f.warning_text ? (
               <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950">
@@ -40,7 +51,8 @@ export function FaqSection({ items, title = "SSS", detailLayout }: Props) {
               </p>
             ) : null}
           </div>
-        ))}
+          );
+        })}
       </dl>
     </section>
   );

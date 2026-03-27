@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { ArticleSubmissionForm } from "@/components/forms/ArticleSubmissionForm";
 import { PostCard } from "@/components/home/PostCard";
+import { HomeQuestionSearch } from "@/components/home/HomeQuestionSearch";
 import { RibbonHeading } from "@/components/home/RibbonHeading";
 import { RegionsListing } from "@/components/home/RegionsListing";
+import { filterQuestionsByTextQuery } from "@/lib/data/question-search";
 import {
   listQuestionsForLang,
   loadRegionsFromSupabase,
@@ -17,7 +19,7 @@ export const dynamic = "force-dynamic";
 
 type Props = {
   params: Promise<{ lang: string }>;
-  searchParams: Promise<{ category?: string | string[] }>;
+  searchParams: Promise<{ category?: string | string[]; q?: string | string[] }>;
 };
 
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
@@ -58,6 +60,13 @@ export default async function LangHome({ params, searchParams }: Props) {
       : Array.isArray(rawCat)
         ? (rawCat[0] ?? "").trim()
         : "";
+  const rawQ = sp.q;
+  const searchQuery =
+    typeof rawQ === "string"
+      ? rawQ
+      : Array.isArray(rawQ)
+        ? (rawQ[0] ?? "")
+        : "";
 
   const [{ regions, error: regionsError }, allQuestions] = await Promise.all([
     loadRegionsFromSupabase(),
@@ -70,14 +79,27 @@ export default async function LangHome({ params, searchParams }: Props) {
   const unknownCategoryFilter =
     categoryFilter.length > 0 && filterCanon == null;
 
-  const questions = unknownCategoryFilter
+  const afterCategory = unknownCategoryFilter
     ? []
     : filterCanon != null
       ? allQuestions.filter(
           (q) => normalizeQuestionCategorySlug(q.category) === filterCanon
         )
       : allQuestions;
+
+  const questions = filterQuestionsByTextQuery(
+    afterCategory,
+    searchQuery,
+    lang
+  );
   const siteOrigin = getPublicSiteUrl();
+  const searchTrimmed = searchQuery.trim();
+  const categoryHiddenValue =
+    filterCanon != null
+      ? filterCanon
+      : categoryFilter.length > 0
+        ? categoryFilter
+        : null;
 
   const filterHeadingLabel = categoryFilter.length
     ? categoryLabelForLang(categoryFilter, lang)
@@ -95,9 +117,15 @@ export default async function LangHome({ params, searchParams }: Props) {
   return (
     <div className="space-y-12 sm:space-y-16">
       <section id="latest-posts" aria-labelledby="latest-posts-heading">
-        <RibbonHeading>
-          <span id="latest-posts-heading">{latestLabel}</span>
-        </RibbonHeading>
+        <h2 id="latest-posts-heading" className="sr-only">
+          {latestLabel}
+        </h2>
+
+        <HomeQuestionSearch
+          lang={lang}
+          initialQuery={searchQuery}
+          categoryValue={categoryHiddenValue}
+        />
 
         {questions.length === 0 ? (
           <p className="text-center text-sm text-zinc-500">
@@ -105,6 +133,10 @@ export default async function LangHome({ params, searchParams }: Props) {
               ? lang === "tr"
                 ? "Geçersiz kategori."
                 : "Invalid category."
+              : searchTrimmed.length > 0 && afterCategory.length > 0
+                ? lang === "tr"
+                  ? "Aramanızla eşleşen içerik yok."
+                  : "No posts match your search."
               : categoryFilter.length > 0
                 ? lang === "tr"
                   ? "Bu kategoride içerik yok."

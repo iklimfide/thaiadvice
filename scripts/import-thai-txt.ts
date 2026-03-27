@@ -127,6 +127,8 @@ function parseArticleBody(body: string): Omit<ParsedArticle, "id" | "category" |
       .replace(/\s+/g, " ")
       .trim()
       .slice(0, 2000);
+    rest = rest.slice(0, quickM.index!) + rest.slice(quickM.index! + quickM[0].length);
+    rest = rest.replace(/^\s*\r?\n/, "").trim();
   }
 
   const content = rest.trim();

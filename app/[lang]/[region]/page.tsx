@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { MasterAddSubRegion } from "@/components/admin/MasterAddSubRegion";
 import { SubRegionCard } from "@/components/cards/SubRegionCard";
+import { RegionPageMasterHeader } from "@/components/content/RegionPageMasterHeader";
 import { FaqSection } from "@/components/faq/FaqSection";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { SectionTitle } from "@/components/ui/SectionTitle";
@@ -9,6 +11,7 @@ import {
   listFaqByCategory,
   listSubRegionsForRegion,
 } from "@/lib/data/queries";
+import { displayRegionTitle } from "@/lib/format/display-names";
 import { pageMetadata } from "@/lib/metadata/site";
 
 export const dynamic = "force-dynamic";
@@ -22,8 +25,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const region = await getRegionBySlug(regionSlug);
   if (!region) return { title: "Bulunamadı" };
   const hasImage = Boolean(region.image?.trim());
+  const regionTitle = displayRegionTitle(region.name, region.slug, lang);
   return pageMetadata({
-    title: region.name || region.slug,
+    title: regionTitle,
     description: region.description?.trim() || null,
     image: hasImage ? region.image : null,
     path: `/${lang}/${region.slug}`,
@@ -41,9 +45,10 @@ export default async function RegionPage({ params }: Props) {
   ]);
 
   const home = lang === "tr" ? "Ana sayfa" : "Home";
+  const regionTitle = displayRegionTitle(region.name, region.slug, lang);
   const crumbs = [
     { label: home, href: `/${lang}` },
-    { label: region.name || region.slug },
+    { label: regionTitle },
   ];
 
   const subsTitle = lang === "tr" ? "Alt bölgeler" : "Sub-regions";
@@ -51,20 +56,17 @@ export default async function RegionPage({ params }: Props) {
 
   return (
     <div>
-      <Breadcrumbs items={crumbs} />
-      <header className="mb-8 border-b border-zinc-200 pb-8">
-        <h1 className="font-serif text-3xl font-bold text-zinc-900 sm:text-4xl">
-          {region.name || region.slug}
-        </h1>
-        {region.description?.trim() ? (
-          <p className="mt-3 max-w-2xl text-lg leading-relaxed text-zinc-600">
-            {region.description}
-          </p>
-        ) : null}
-      </header>
+      <Breadcrumbs
+        items={crumbs}
+        pagePath={`/${lang}/${regionSlug}`}
+      />
+      <RegionPageMasterHeader lang={lang} region={region} />
 
       <section className="mb-10">
-        <SectionTitle>{subsTitle}</SectionTitle>
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <SectionTitle className="mb-0 sm:flex-1">{subsTitle}</SectionTitle>
+          <MasterAddSubRegion regionId={region.id} lang={lang} />
+        </div>
         {subs.length === 0 ? (
           <p className="text-sm text-zinc-500">{emptySubs}</p>
         ) : (

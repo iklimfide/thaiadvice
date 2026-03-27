@@ -3,6 +3,7 @@ import { ArticleMarkdownBody } from "@/components/content/ArticleMarkdownBody";
 import { SafeHeroImageBox } from "@/components/ui/SafeImage";
 import { FaqSection } from "@/components/faq/FaqSection";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
+import { displayRegionTitle } from "@/lib/format/display-names";
 import type {
   FaqEntryRow,
   PlaceRow,
@@ -16,6 +17,7 @@ type Props = {
   sub: SubRegionRow;
   place: PlaceRow;
   faq: FaqEntryRow[];
+  pagePath: string;
 };
 
 export function PlaceDetailContent({
@@ -24,11 +26,13 @@ export function PlaceDetailContent({
   sub,
   place,
   faq,
+  pagePath,
 }: Props) {
   const home = lang === "tr" ? "Ana sayfa" : "Home";
+  const regionLabel = displayRegionTitle(region.name, region.slug, lang);
   const crumbs = [
     { label: home, href: `/${lang}` },
-    { label: region.name || region.slug, href: `/${lang}/${region.slug}` },
+    { label: regionLabel, href: `/${lang}/${region.slug}` },
     {
       label: sub.name || sub.slug,
       href: `/${lang}/${region.slug}/${sub.slug}`,
@@ -39,8 +43,11 @@ export function PlaceDetailContent({
   const hasImage = Boolean(place.image?.trim());
 
   return (
-    <article className="article-detail mx-auto w-full max-w-3xl px-0 sm:px-1">
-      <Breadcrumbs items={crumbs} />
+    <article
+      lang={lang === "tr" ? "tr" : "en"}
+      className="article-detail mx-auto w-full max-w-3xl px-0 sm:px-1"
+    >
+      <Breadcrumbs items={crumbs} pagePath={pagePath} />
       <header className="mb-6 sm:mb-8">
         <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
           <MasterEditable

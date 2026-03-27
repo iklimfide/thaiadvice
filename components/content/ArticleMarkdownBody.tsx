@@ -1,5 +1,6 @@
 import ReactMarkdown from "react-markdown";
 import type { Components } from "react-markdown";
+import { stripLeadingQuickAnswerBlockFromMarkdown } from "@/lib/format/faq-display";
 import rehypeSanitize from "rehype-sanitize";
 import remarkBreaks from "remark-breaks";
 import remarkGfm from "remark-gfm";
@@ -56,7 +57,7 @@ const markdownComponents: Components = {
 };
 
 export function ArticleMarkdownBody({ markdown, className }: Props) {
-  const trimmed = markdown.trim();
+  const trimmed = stripLeadingQuickAnswerBlockFromMarkdown(markdown).trim();
   if (!trimmed) return null;
 
   return (

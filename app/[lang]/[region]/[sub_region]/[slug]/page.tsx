@@ -99,12 +99,15 @@ export default async function RegionCategorySlugPage({ params }: Props) {
       : null;
     const faq = await listFaqByCategory(resolved.question.slug);
 
+    const articlePath = `/${lang}/${regionSlug}/${subSlug}/${slug}`;
     return (
       <QuestionArticleContent
         lang={lang}
         region={displayRegion}
         question={resolved.question}
         matchingSubRegion={matchingSub}
+        articleCategorySlug={subSlug}
+        pagePath={articlePath}
         faq={faq}
       />
     );
@@ -119,6 +122,7 @@ export default async function RegionCategorySlugPage({ params }: Props) {
   if (!place) notFound();
   const faq = await listFaqByCategory(place.slug);
 
+  const placePath = `/${lang}/${regionSlug}/${subSlug}/${slug}`;
   return (
     <PlaceDetailContent
       lang={lang}
@@ -126,6 +130,7 @@ export default async function RegionCategorySlugPage({ params }: Props) {
       sub={sub}
       place={place}
       faq={faq}
+      pagePath={placePath}
     />
   );
 }

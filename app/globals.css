@@ -21,25 +21,63 @@ body {
   }
 }
 
-/* Makale / mekân detay: iki yana yaslama + gömülü HTML başlıkları (gelecek / içerikte h2–h4 varsa) */
+/* Makale / mekân detay: iki yana yaslama; otomatik tire (hyphens-auto) Türkçede yanlış bölünmelere yol açabildiği için manual */
 @layer components {
   .article-detail-body {
-    @apply hyphens-auto text-justify text-pretty text-zinc-700;
+    hyphens: manual;
+    -webkit-hyphens: manual;
+    overflow-wrap: break-word;
+    word-break: normal;
+    @apply text-justify text-pretty text-zinc-700;
+    /* Metin + emoji (içerikteki Unicode emoji düzgün renkli görünsün) */
+    font-family:
+      var(--font-dm-sans), ui-sans-serif, system-ui, "Segoe UI Emoji",
+      "Apple Color Emoji", "Noto Color Emoji", "EmojiOne Color", sans-serif;
+    counter-reset: detail-h2;
+  }
+
+  .article-detail-excerpt {
+    hyphens: manual;
+    -webkit-hyphens: manual;
+    overflow-wrap: break-word;
+    word-break: normal;
+    text-indent: 1.25em;
+    @apply text-justify text-pretty;
   }
 
   .article-detail-body h2 {
-    @apply mb-3 mt-10 border-b-2 border-brand/25 pb-2 font-serif text-xl font-bold tracking-tight text-zinc-900 sm:text-2xl;
+    counter-increment: detail-h2;
+    counter-reset: detail-h3;
+    @apply mb-4 mt-10 flex scroll-mt-24 gap-3 border-b border-brand/20 pb-3 font-serif text-xl font-bold leading-snug tracking-tight text-zinc-900 sm:mt-12 sm:gap-4 sm:text-2xl;
     text-align: start;
+  }
+
+  .article-detail-body h2::before {
+    content: counter(detail-h2);
+    @apply flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand to-violet-600 text-sm font-bold text-white shadow-sm ring-1 ring-brand/20 sm:h-10 sm:w-10 sm:text-base;
+    font-family: var(--font-dm-sans), ui-sans-serif, sans-serif;
   }
 
   .article-detail-body h3 {
-    @apply mb-2 mt-8 font-serif text-lg font-bold text-zinc-900 sm:text-xl;
+    counter-increment: detail-h3;
+    @apply mb-3 mt-9 flex scroll-mt-24 items-baseline gap-2.5 font-serif text-lg font-bold leading-snug text-zinc-900 sm:mt-10 sm:text-xl;
     text-align: start;
   }
 
+  .article-detail-body h3::before {
+    content: "✦";
+    @apply shrink-0 text-base leading-none text-brand sm:text-lg;
+    filter: drop-shadow(0 1px 1px rgb(0 0 0 / 0.06));
+  }
+
   .article-detail-body h4 {
-    @apply mb-2 mt-6 text-base font-bold uppercase tracking-wide text-zinc-800;
+    @apply mb-2 mt-7 flex scroll-mt-24 items-center gap-2 rounded-lg bg-violet-50/90 px-3 py-2 text-base font-bold uppercase tracking-wide text-brand-dark ring-1 ring-brand/15 sm:px-4;
     text-align: start;
+  }
+
+  .article-detail-body h4::before {
+    content: "▸";
+    @apply text-lg font-normal text-brand;
   }
 
   .article-detail-body h2:first-child,
@@ -52,22 +90,66 @@ body {
     @apply mb-4 last:mb-0;
   }
 
+  /* Yalnızca gövde kök paragrafları; liste/blockquote içi <p> girintisiz */
+  .article-detail-body > p {
+    text-indent: 1.25em;
+  }
+
+  .article-detail-body > :first-child:is(p) {
+    margin-top: 0;
+  }
+
   .article-detail-body ul,
   .article-detail-body ol {
-    @apply my-4 list-outside space-y-1 pl-6;
-    text-align: start;
+    @apply my-5 text-start sm:my-6;
   }
 
   .article-detail-body ul {
-    list-style-type: disc;
+    @apply list-none space-y-3 pl-0 sm:space-y-3.5;
+  }
+
+  .article-detail-body ul > li {
+    @apply relative pl-8 leading-relaxed sm:pl-9;
+  }
+
+  .article-detail-body ul > li::before {
+    content: "●";
+    @apply absolute left-0 top-[0.35em] text-sm text-brand;
+    line-height: 1;
   }
 
   .article-detail-body ol {
-    list-style-type: decimal;
+    @apply list-decimal space-y-3 pl-8 sm:space-y-3.5 sm:pl-10;
+  }
+
+  .article-detail-body ol > li {
+    @apply leading-relaxed;
+    padding-inline-start: 0.35rem;
+  }
+
+  .article-detail-body ol > li::marker {
+    @apply font-semibold text-brand;
   }
 
   .article-detail-body li {
-    @apply pl-1;
+    @apply text-zinc-700;
+  }
+
+  /* GFM görev listeleri */
+  .article-detail-body ul.contains-task-list {
+    @apply space-y-2;
+  }
+
+  .article-detail-body li.task-list-item {
+    @apply relative flex list-none gap-3 pl-0;
+  }
+
+  .article-detail-body li.task-list-item::before {
+    content: none;
+  }
+
+  .article-detail-body li.task-list-item input[type="checkbox"] {
+    @apply mt-1 h-4 w-4 shrink-0 rounded border-zinc-300 text-brand accent-brand;
   }
 
   .article-detail-body a {

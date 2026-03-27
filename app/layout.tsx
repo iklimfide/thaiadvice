@@ -23,6 +23,11 @@ export const metadata: Metadata = {
     template: "%s | ThaiAdvice.com",
   },
   description: "Tayland seyahat rehberi: bölgeler, alt bölgeler ve mekanlar.",
+  /** app/icon.png route’u webpack önbelleğine bağımlı; public statik dosya daha stabil */
+  icons: {
+    icon: "/icon.png",
+    apple: "/apple-icon.png",
+  },
 };
 
 export default function RootLayout({
