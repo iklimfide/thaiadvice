@@ -43,7 +43,7 @@ const nextConfig = {
     return {
       beforeFiles: [
         {
-          source: "/:file(([^/]+)-[0-9]{10,}\\.webp)",
+          source: "/:file((?:[^/]+)-[0-9]{10,}\\.webp)",
           destination: "/api/image-proxy/:file",
         },
       ],
