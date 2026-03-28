@@ -12,11 +12,39 @@ type Props = {
   detailLayout?: boolean;
 };
 
+function faqPageJsonLd(items: FaqEntryRow[]): Record<string, unknown> {
+  const mainEntity = items.map((f) => {
+    const answer = stripFaqQuickAnswerPrefix(f.short_answer_text);
+    const hideQ = isFaqQuestionOnlyQuickAnswerLabel(f.question);
+    return {
+      "@type": "Question",
+      name: hideQ ? answer.slice(0, 120) : f.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: answer,
+      },
+    };
+  });
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity,
+  };
+}
+
 export function FaqSection({ items, title = "SSS", detailLayout }: Props) {
   if (items.length === 0) return null;
 
+  const faqLd = faqPageJsonLd(items);
+
   return (
     <section className="mt-10 border-t border-zinc-200 pt-8 sm:mt-12 sm:pt-10">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(faqLd).replace(/</g, "\\u003c"),
+        }}
+      />
       <SectionTitle variant={detailLayout ? "detail" : "default"}>
         {title}
       </SectionTitle>

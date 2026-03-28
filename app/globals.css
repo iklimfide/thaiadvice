@@ -70,6 +70,21 @@ body {
     filter: drop-shadow(0 1px 1px rgb(0 0 0 / 0.06));
   }
 
+  /* “Perlamare görüşü” — alkol rehberi vb. şablondaki vurgulu özet kutusu */
+  .article-detail-body h3.article-perlamare-heading {
+    @apply mt-12 border-b border-brand/20 pb-2 sm:mt-14;
+  }
+
+  .article-detail-body h3.article-perlamare-heading::before {
+    content: "💡";
+    filter: none;
+    @apply text-lg sm:text-xl;
+  }
+
+  .article-detail-body h3.article-perlamare-heading + p {
+    @apply mt-4 rounded-xl border border-brand/15 bg-gradient-to-br from-brand/[0.06] via-white to-violet-50/40 px-4 py-4 text-pretty text-justify text-base font-medium leading-relaxed text-zinc-800 sm:px-5 sm:py-5 sm:text-lg;
+  }
+
   .article-detail-body h4 {
     @apply mb-2 mt-7 flex scroll-mt-24 items-center gap-2 rounded-lg bg-violet-50/90 px-3 py-2 text-base font-bold uppercase tracking-wide text-brand-dark ring-1 ring-brand/15 sm:px-4;
     text-align: start;
@@ -97,6 +112,16 @@ body {
 
   .article-detail-body > :first-child:is(p) {
     margin-top: 0;
+  }
+
+  /* Düz paragrafla başlayan makaleler: ilk blok hafif öne çıkar (## yoksa da detay “boş” hissetmesin) */
+  .article-detail-body > p:first-of-type {
+    @apply text-[1.05rem] font-medium leading-[1.75] text-zinc-800 sm:text-[1.125rem] sm:leading-[1.8];
+  }
+
+  /* İlk öğe başlık değilse (liste, alıntı vb.) bir sonraki ilk paragraf */
+  .article-detail-body > :not(p) + p {
+    @apply text-[1.05rem] font-medium leading-[1.75] text-zinc-800 sm:text-[1.125rem] sm:leading-[1.8];
   }
 
   .article-detail-body ul,

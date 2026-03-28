@@ -184,7 +184,8 @@ async function migrateQuestions(
     try {
       const buf = await fetchImageBuffer(url);
       const webp = await bufferToWebp(buf);
-      const path = `webp-migrate/questions/${row.id}/${slugSegmentForStorage(row.slug)}-${Date.now()}.webp`;
+      const slugPart = slugSegmentForStorage(row.slug || row.id);
+      const path = `webp-migrate/questions/${slugPart}/${slugPart}-${Date.now()}.webp`;
       const publicUrl = await uploadWebp(supabase, path, webp, opts.dryRun);
       if (!opts.dryRun) {
         const { error: upErr } = await supabase

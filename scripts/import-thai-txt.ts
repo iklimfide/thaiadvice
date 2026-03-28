@@ -1,8 +1,17 @@
 /**
  * thai.txt (YAML benzeri frontmatter + markdown) → Supabase `questions`
  *
+ * İki üst bilgi biçimi:
+ *   A) Klasik: --- … --- ile çevrili blok, ardından gövde (### [DİL KODU: tr], # başlık, **SLUG:** …).
+ *   B) Düz: --- yok; satırlar SLUG:, CATEGORY_ID:, REGION: … (yalnız A–Z ve _ ile başlayan anahtarlar),
+ *      ardından [DİL KODU: TR] veya ### [DİL KODU: tr], başlık (# veya düz ilk satır), isteğe bağlı
+ *      "Hızlı Cevap (Snippet):" paragrafı.
+ *
  * Kullanım:
  *   npx tsx scripts/import-thai-txt.ts [dosya-yolu]
+ *
+ * Dosya `## 1. HEADER (META DATA)` (Perlamare export) ise bu betik otomatik olarak
+ * `import-thai-export-txt.ts` çalıştırır; ayrıca `import:thai-export` gerekmez.
  *
  * Varsayılan dosya: kullanıcı Downloads yolu (yoksa ./thai.txt denenir)
  *
@@ -66,16 +75,94 @@ function parseFrontmatter(block: string): Record<string, string> {
   return out;
 }
 
+/** BOM ve baştaki boş satırlar; ardından ilk makale --- ile başlamalı */
+function normalizeImportPreamble(raw: string): string {
+  let s = raw.replace(/^\uFEFF/, "");
+  s = s.replace(/^\u200B+/, "");
+  s = s.replace(/^(\s*\r?\n)+/, "");
+  s = s.trimStart();
+  return s.trimEnd();
+}
+
+/** Perlamare Word/export şablonu — yalnızca import-thai-export-txt.ts ile işlenmeli */
+function isPerlamareExportFormat(s: string): boolean {
+  const head = s.slice(0, 6000);
+  return /##\s*1\.\s*HEADER\s*\(?\s*META\s*DATA\s*\)?/i.test(head);
+}
+
 /**
  * Birden fazla makale: ---\nfrontmatter\n---\nbody tekrarlar.
  * Markdown’daki yatay çizgi (tek başına ---) ayırıcı sayılmaz; sonraki blok yalnızca
  * --- sonrasında KEY: (örn. ID:, CATEGORY_ID:) ile başlıyorsa yeni makaledir.
+ *
+ * Alternatif (tek makale): --- olmadan üstte yalnızca BÜYÜK_HARF ANAHTARLAR (örn. SLUG:, CATEGORY_ID:),
+ * ardından gövde — [DİL KODU: tr] ve düz metin başlık kabul edilir.
+ * "I. Header (Meta Data)" gibi ön satırlar atlanır; meta bloğu tanınan ilk anahtarla başlar.
+ *
+ * UYARI: `## 1. HEADER (META DATA)` ile başlayan Perlamare export dosyaları bu betikle
+ * KULLANILMAMALI — gövde `---` ile başlar, başlık bozulur, SNIPPET/BODY ham kalır.
+ * Bunun için: npm run import:thai-export
  */
+const PLAIN_META_KEYS = new Set([
+  "ID",
+  "CATEGORY_ID",
+  "CATEGORY",
+  "REGION",
+  "SLUG",
+  "AUTHOR",
+  "IMAGE_URL",
+]);
+
+function extractPlainFrontmatter(s: string): { fm: string; body: string } | null {
+  const lines = s.split(/\r?\n/);
+  let i = 0;
+  while (i < lines.length) {
+    const raw = lines[i];
+    if (raw.trim() === "") {
+      i++;
+      continue;
+    }
+    const m = raw.match(/^([A-Z][A-Z0-9_]*)\s*:\s*(.*)$/);
+    if (m && PLAIN_META_KEYS.has(m[1].toUpperCase())) break;
+    i++;
+  }
+  if (i >= lines.length) return null;
+
+  const metaLines: string[] = [];
+  while (i < lines.length) {
+    const line = lines[i];
+    if (line.trim() === "") {
+      i++;
+      continue;
+    }
+    const m = line.match(/^([A-Z][A-Z0-9_]*)\s*:\s*(.*)$/);
+    if (!m) break;
+    metaLines.push(`${m[1]}: ${m[2].trim()}`);
+    i++;
+  }
+  if (metaLines.length === 0) return null;
+  const body = lines.slice(i).join("\n").trim();
+  return { fm: metaLines.join("\n"), body };
+}
+
 function splitDocuments(raw: string): { fm: string; body: string }[] {
   const out: { fm: string; body: string }[] = [];
-  let s = raw.trim();
+  let s = normalizeImportPreamble(raw);
+  if (isPerlamareExportFormat(s)) {
+    throw new Error(
+      "Bu dosya Perlamare export biçimi; `main()` önce `runThaiExportImport` " +
+        "çağırmalı. (Dahili: splitDocuments’a export ham metni düşmemeli.)"
+    );
+  }
   if (!s.startsWith("---")) {
-    throw new Error("Dosya --- ile başlamalı.");
+    const plain = extractPlainFrontmatter(s);
+    if (plain) return [plain];
+    const head = s.slice(0, 120).replace(/\r?\n/g, "\\n");
+    throw new Error(
+      "Dosya ya --- ile çevrili YAML bloğu ile başlamalı ya da (isteğe bağlı ön başlıktan sonra) " +
+        "ID:/CATEGORY_ID:/SLUG: gibi tanınan meta alanları içermeli.\n" +
+        `(İlk 120 karakter: ${head || "(boş)"})`
+    );
   }
   while (s.length) {
     if (!s.startsWith("---")) {
@@ -99,22 +186,40 @@ function splitDocuments(raw: string): { fm: string; body: string }[] {
   return out;
 }
 
-function parseArticleBody(body: string): Omit<ParsedArticle, "id" | "category" | "region" | "imageUrl" | "author"> {
-  let rest = body;
+function parseArticleBody(
+  body: string,
+  opts?: { slugFromMeta?: string }
+): Omit<ParsedArticle, "id" | "category" | "region" | "imageUrl" | "author"> {
+  let rest = body.trim();
 
-  const langM = rest.match(/###\s*\[\s*DİL KODU:\s*(\w+)\s*\]/i);
+  const langHeading = rest.match(/^###\s*\[\s*DİL KODU:\s*(\w+)\s*\]\s*\r?\n?/i);
+  const langBracket = rest.match(/^\[\s*DİL KODU:\s*(\w+)\s*\]\s*\r?\n/i);
+  const langM = langHeading || langBracket;
   const lang = langM ? langM[1].toLowerCase() : "tr";
   if (langM) rest = rest.slice(langM.index! + langM[0].length).trim();
 
-  const titleM = rest.match(/^#\s+(.+)$/m);
-  if (!titleM) throw new Error("Başlık (# ...) bulunamadı.");
-  const title = titleM[1].trim();
-  rest = rest.replace(/^#\s+.+\r?\n?/m, "").trim();
+  let title: string;
+  const titleHash = rest.match(/^#\s+(.+?)\s*$/m);
+  if (titleHash && titleHash.index === 0) {
+    title = titleHash[1].trim();
+    rest = rest.slice(titleHash[0].length).replace(/^\r?\n?/, "").trim();
+  } else {
+    const first = rest.match(/^([^\r\n]+)/);
+    if (!first) throw new Error("Başlık yok (# veya ilk satır).");
+    title = first[1].trim();
+    rest = rest.slice(first[0].length).replace(/^\r?\n?/, "").trim();
+  }
 
+  let slug: string;
   const slugM = rest.match(/^\*\*SLUG:\*\*\s*(.+)$/im);
-  if (!slugM) throw new Error("**SLUG:** satırı bulunamadı.");
-  const slug = slugM[1].trim();
-  rest = rest.replace(/^\*\*SLUG:\*\*\s*.+\r?\n?/im, "").trim();
+  if (slugM) {
+    slug = slugM[1].trim();
+    rest = rest.replace(/^\*\*SLUG:\*\*\s*.+\r?\n?/im, "").trim();
+  } else if (opts?.slugFromMeta?.trim()) {
+    slug = opts.slugFromMeta.trim();
+  } else {
+    throw new Error("**SLUG:** satırı veya frontmatter SLUG gerekli.");
+  }
 
   let excerpt: string | null = null;
   const quickM = rest.match(
@@ -129,6 +234,17 @@ function parseArticleBody(body: string): Omit<ParsedArticle, "id" | "category" |
       .slice(0, 2000);
     rest = rest.slice(0, quickM.index!) + rest.slice(quickM.index! + quickM[0].length);
     rest = rest.replace(/^\s*\r?\n/, "").trim();
+  } else {
+    const snipLabel = rest.match(/\bHızlı\s+Cevap\s*\(\s*Snippet\s*\)\s*:\s*/i);
+    if (snipLabel) {
+      const start = snipLabel.index! + snipLabel[0].length;
+      let tail = rest.slice(start);
+      const end = tail.search(/\r?\n\r?\n/);
+      const snippetText = (end === -1 ? tail : tail.slice(0, end)).trim();
+      excerpt = snippetText.replace(/\s+/g, " ").slice(0, 2000);
+      const removedEnd = end === -1 ? rest.length : start + end + 2;
+      rest = (rest.slice(0, snipLabel.index!) + rest.slice(removedEnd)).trim();
+    }
   }
 
   const content = rest.trim();
@@ -184,6 +300,16 @@ async function main() {
   }
 
   const raw = readFileSync(filePath, "utf8");
+  if (isPerlamareExportFormat(raw)) {
+    console.log(
+      "Perlamare export biçimi algılandı (## 1. HEADER …) — import-thai-export akışı çalışıyor.\n"
+    );
+    const { runThaiExportImport } = await import("./import-thai-export-txt.js");
+    const code = await runThaiExportImport(filePath);
+    setTimeout(() => process.exit(code), 150);
+    return;
+  }
+
   const docs = splitDocuments(raw);
   if (docs.length === 0) {
     console.error("Parse edilen makale yok.");
@@ -198,7 +324,7 @@ async function main() {
     const { fm, body } = docs[i];
     const meta = parseFrontmatter(fm);
     try {
-      const parsed = parseArticleBody(body);
+      const parsed = parseArticleBody(body, { slugFromMeta: meta.SLUG });
       const rawCat = meta.CATEGORY_ID || meta.CATEGORY || "";
       const category =
         normalizeQuestionCategorySlug(rawCat) ?? rawCat.trim();

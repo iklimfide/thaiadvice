@@ -23,11 +23,27 @@ export const metadata: Metadata = {
     template: "%s | ThaiAdvice.com",
   },
   description: "Tayland seyahat rehberi: bölgeler, alt bölgeler ve mekanlar.",
+  applicationName: "ThaiAdvice.com",
+  referrer: "origin-when-cross-origin",
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true },
+  },
+  openGraph: {
+    type: "website",
+    siteName: "ThaiAdvice.com",
+    locale: "tr_TR",
+    alternateLocale: ["en_US"],
+  },
   /** app/icon.png route’u webpack önbelleğine bağımlı; public statik dosya daha stabil */
   icons: {
     icon: "/icon.png",
     apple: "/apple-icon.png",
   },
+  verification: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION
+    ? { google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION }
+    : undefined,
 };
 
 export default function RootLayout({

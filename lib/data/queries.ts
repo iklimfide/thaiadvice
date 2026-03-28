@@ -6,6 +6,7 @@ import {
   normalizeQuestionCategorySlug,
   QUESTION_CATEGORY_DEFS,
 } from "@/lib/data/question-categories";
+import { isSiteLang } from "@/lib/seo/site-languages";
 import {
   mapFaqEntryRow,
   mapFaqItemRow,
@@ -254,6 +255,45 @@ export async function resolveArticleDetail(
   }
 
   return null;
+}
+
+/**
+ * Aynı makale için (slug + URL’deki bölge/kategori ile eşleşen) tüm dil satırları — hreflang.
+ */
+export async function listQuestionAlternatesForUrl(
+  regionSegment: string,
+  categorySegment: string,
+  articleSlug: string
+): Promise<QuestionRow[]> {
+  const slug = articleSlug.trim();
+  if (!slug) return [];
+
+  const regionRow = await getRegionBySlug(regionSegment);
+  const rKeys = uniqueRegionKeys(regionSegment, regionRow);
+  const cKeys = categoryKeysForUrlResolution(categorySegment);
+
+  const { data, error } = await getSupabase()
+    .from("questions")
+    .select("*")
+    .eq("slug", slug);
+
+  if (error) {
+    logSupabase("listQuestionAlternatesForUrl", error);
+    return [];
+  }
+
+  return (data ?? [])
+    .map(mapQuestionRow)
+    .filter((q) => {
+      if (!isSiteLang(q.lang)) return false;
+      const regOk = rKeys.some(
+        (rk) => rk.toLowerCase() === q.region.toLowerCase()
+      );
+      const catOk = cKeys.some(
+        (ck) => ck.toLowerCase() === q.category.toLowerCase()
+      );
+      return regOk && catOk;
+    });
 }
 
 export async function listQuestionsForLang(

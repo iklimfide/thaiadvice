@@ -105,7 +105,7 @@ export function PostCard({ lang, question, siteOrigin }: Props) {
           wrapClassName="mt-2"
         >
           <p className="text-xs text-zinc-500">
-            {lang === "tr" ? "yazar:" : "by"}{" "}
+            {lang === "tr" ? "Yazar:" : "by"}{" "}
             <span className="text-zinc-700">{question.author}</span>
             {dateStr ? (
               <>

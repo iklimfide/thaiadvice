@@ -11,6 +11,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "Moderasyon",
+  robots: { index: false, follow: false },
 };
 
 export default async function AdminModerationPage() {

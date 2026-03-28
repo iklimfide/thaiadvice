@@ -1,7 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { slugSegmentForStorage } from "@/lib/data/storage-slug";
+import {
+  questionHeroStorageObjectPath,
+  slugSegmentForStorage,
+} from "@/lib/data/storage-slug";
 import { getMasterUser } from "@/lib/admin/auth-server";
 import { ingestRemoteImageAsWebpToStorage } from "@/lib/server/ingest-remote-image";
 import { bufferToWebp } from "@/lib/server/image-webp";
@@ -15,6 +18,7 @@ const QUESTION_FIELDS = new Set([
   "excerpt",
   "author",
   "image_url",
+  "media_seo_text",
   "category",
   "region",
 ]);
@@ -83,7 +87,10 @@ export async function masterUpdateQuestionField(
   let value: unknown = String(formData.get("value") ?? "");
   const db = getSupabaseServiceRole();
 
-  if (field === "excerpt" && String(value).trim() === "") {
+  if (
+    (field === "excerpt" || field === "media_seo_text") &&
+    String(value).trim() === ""
+  ) {
     value = null;
   } else if (field === "image_url") {
     const t = String(value).trim();
@@ -104,11 +111,10 @@ export async function masterUpdateQuestionField(
           .single();
         slugBase = row?.slug ?? id;
       }
-      const slugPart = slugSegmentForStorage(slugBase);
       const ing = await ingestRemoteImageAsWebpToStorage(
         db,
         t,
-        `questions/${id}/${slugPart}-${Date.now()}.webp`
+        questionHeroStorageObjectPath(slugBase)
       );
       if ("error" in ing) return { ok: false, message: ing.error };
       value = ing.publicUrl;

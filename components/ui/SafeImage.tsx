@@ -2,6 +2,21 @@
 
 import Image from "next/image";
 import { useState } from "react";
+import {
+  shouldUseSiteProxyWebpPath,
+  sitePublicImagePathFromQuestionStorageUrl,
+} from "@/lib/format/site-image-url";
+
+function displaySrcForImage(src: string): string {
+  const short = sitePublicImagePathFromQuestionStorageUrl(src);
+  return short ?? src;
+}
+
+/** Site kökü .webp veya Supabase: `/_next/image` proxy’si kullanılmasın */
+function unoptimizedForSrc(displaySrc: string, originalSrc: string): boolean {
+  if (shouldUseSiteProxyWebpPath(displaySrc)) return true;
+  return /supabase\.co\/storage\//i.test(originalSrc);
+}
 
 type Base = {
   src: string | null | undefined;
@@ -37,15 +52,19 @@ export function SafeImage(props: SafeImageProps) {
     return <>{props.fallback}</>;
   }
 
+  const d = displaySrcForImage(t);
+  const unopt = unoptimizedForSrc(d, t);
+
   if (props.fill) {
     return (
       <Image
-        src={t}
+        src={d}
         alt={props.alt ?? ""}
         fill
         className={props.className}
         sizes={props.sizes}
         priority={props.priority}
+        unoptimized={unopt}
         onError={() => setBroken(true)}
       />
     );
@@ -53,12 +72,13 @@ export function SafeImage(props: SafeImageProps) {
 
   return (
     <Image
-      src={t}
+      src={d}
       alt={props.alt ?? ""}
       width={props.width}
       height={props.height}
       className={props.className}
       priority={props.priority}
+      unoptimized={unopt}
       onError={() => setBroken(true)}
     />
   );
@@ -87,15 +107,18 @@ export function SafeHeroImageBox({
     return null;
   }
 
+  const d = displaySrcForImage(t);
+
   return (
     <div className={wrapperClassName}>
       <Image
-        src={t}
+        src={d}
         alt=""
         fill
         className={imageClassName}
         sizes={sizes}
         priority={priority}
+        unoptimized={unoptimizedForSrc(d, t)}
         onError={() => setBroken(true)}
       />
     </div>

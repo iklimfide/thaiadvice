@@ -2,15 +2,20 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { PlaceDetailContent } from "@/components/content/PlaceDetailContent";
 import { QuestionArticleContent } from "@/components/content/QuestionArticleContent";
+import { categorySlugForUrl } from "@/lib/data/question-categories";
 import {
   getPlaceBySlug,
   getRegionBySlug,
   getSubRegionBySlug,
   listFaqByCategory,
+  listQuestionAlternatesForUrl,
   resolveArticleDetail,
 } from "@/lib/data/queries";
 import type { RegionRow } from "@/lib/types/database";
-import { pageMetadata } from "@/lib/metadata/site";
+import { sitePublicImagePathFromQuestionStorageUrl } from "@/lib/format/site-image-url";
+import { ogImageAltFromMediaSeo } from "@/lib/format/question-seo";
+import { absoluteUrl, pageMetadata } from "@/lib/metadata/site";
+import { localizedPathAlternates } from "@/lib/seo/language-paths";
 
 export const dynamic = "force-dynamic";
 
@@ -52,12 +57,38 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (resolved) {
     const q = resolved.question;
     const hasImg = Boolean(q.image_url?.trim());
+    const shortImg = hasImg
+      ? sitePublicImagePathFromQuestionStorageUrl(q.image_url)
+      : null;
+    const imageForMeta =
+      shortImg != null
+        ? absoluteUrl(shortImg)
+        : hasImg
+          ? q.image_url!.trim()
+          : null;
+    const cat = categorySlugForUrl(q.category);
+    const canonicalPath = `/${lang}/${q.region}/${cat}/${q.slug}`;
+    const variants = await listQuestionAlternatesForUrl(
+      regionSlug,
+      subSlug,
+      slug
+    );
+    const languagePaths: Partial<Record<string, string>> = {};
+    for (const row of variants) {
+      const c = categorySlugForUrl(row.category);
+      languagePaths[row.lang] = `/${row.lang}/${row.region}/${c}/${row.slug}`;
+    }
     return pageMetadata({
       title: q.title,
       description:
         q.excerpt?.trim() || metaDescriptionFromIntro(q.content),
-      image: hasImg ? q.image_url : null,
-      path: `/${lang}/${regionSlug}/${subSlug}/${slug}`,
+      image: imageForMeta,
+      imageAlt: hasImg
+        ? ogImageAltFromMediaSeo(q.lang, q.media_seo_text)
+        : undefined,
+      path: canonicalPath,
+      locale: lang,
+      languagePaths,
     });
   }
 
@@ -74,6 +105,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description: metaDescriptionFromIntro(place.ai_intro),
     image: hasImage ? place.image : null,
     path: `/${lang}/${region.slug}/${sub.slug}/${place.slug}`,
+    locale: lang,
+    languagePaths: localizedPathAlternates(
+      region.slug,
+      sub.slug,
+      place.slug
+    ),
   });
 }
 
@@ -99,7 +136,8 @@ export default async function RegionCategorySlugPage({ params }: Props) {
       : null;
     const faq = await listFaqByCategory(resolved.question.slug);
 
-    const articlePath = `/${lang}/${regionSlug}/${subSlug}/${slug}`;
+    const q = resolved.question;
+    const articlePath = `/${lang}/${q.region}/${categorySlugForUrl(q.category)}/${q.slug}`;
     return (
       <QuestionArticleContent
         lang={lang}

@@ -1,7 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { slugSegmentForStorage } from "@/lib/data/storage-slug";
+import {
+  questionHeroStorageObjectPath,
+  slugSegmentForStorage,
+} from "@/lib/data/storage-slug";
 import { getMasterUser } from "@/lib/admin/auth-server";
 import { ingestRemoteImageAsWebpToStorage } from "@/lib/server/ingest-remote-image";
 import { bufferToWebp } from "@/lib/server/image-webp";
@@ -150,7 +153,6 @@ export async function setQuestionImageUrl(
   const lang = String(formData.get("lang") ?? "").trim();
 
   const db = getSupabaseServiceRole();
-  const slugPart = slugSegmentForStorage(slugRaw || id);
 
   if (!image_url) {
     const { error } = await db
@@ -162,7 +164,7 @@ export async function setQuestionImageUrl(
     return { ok: true, message: "Görsel kaldırıldı." };
   }
 
-  const storagePath = `questions/${id}/${slugPart}-${Date.now()}.webp`;
+  const storagePath = questionHeroStorageObjectPath(slugRaw || id);
   const ing = await ingestRemoteImageAsWebpToStorage(db, image_url, storagePath);
   if ("error" in ing) {
     return { ok: false, message: ing.error };
@@ -200,8 +202,7 @@ export async function uploadQuestionImage(
   }
 
   const db = getSupabaseServiceRole();
-  const slugPart = slugSegmentForStorage(slugRaw || id);
-  const path = `questions/${id}/${slugPart}-${Date.now()}.webp`;
+  const path = questionHeroStorageObjectPath(slugRaw || id);
   let webp: Buffer;
   try {
     webp = await bufferToWebp(Buffer.from(await file.arrayBuffer()));

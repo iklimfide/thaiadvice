@@ -4,6 +4,7 @@ import { SafeHeroImageBox } from "@/components/ui/SafeImage";
 import { FaqSection } from "@/components/faq/FaqSection";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { displayRegionTitle } from "@/lib/format/display-names";
+import { placeDetailJsonLd } from "@/lib/format/place-seo";
 import type {
   FaqEntryRow,
   PlaceRow,
@@ -41,12 +42,25 @@ export function PlaceDetailContent({
   ];
 
   const hasImage = Boolean(place.image?.trim());
+  const placeJsonLd = placeDetailJsonLd({
+    place,
+    region,
+    sub,
+    pagePath,
+    lang,
+  });
 
   return (
     <article
       lang={lang === "tr" ? "tr" : "en"}
       className="article-detail mx-auto w-full max-w-3xl px-0 sm:px-1"
     >
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(placeJsonLd).replace(/</g, "\\u003c"),
+        }}
+      />
       <Breadcrumbs items={crumbs} pagePath={pagePath} />
       <header className="mb-6 sm:mb-8">
         <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
@@ -128,10 +142,12 @@ export function PlaceDetailContent({
         wrapClassName="w-full max-w-3xl"
       >
         {place.ai_intro?.trim() ? (
-          <ArticleMarkdownBody
-            markdown={place.ai_intro}
-            className="article-detail-body text-base leading-[1.75] sm:text-[1.0625rem] sm:leading-[1.8]"
-          />
+          <div className="rounded-2xl border border-zinc-200/90 bg-white p-5 shadow-sm ring-1 ring-zinc-100/80 sm:p-8 md:p-10">
+            <ArticleMarkdownBody
+              markdown={place.ai_intro}
+              className="article-detail-body text-base leading-[1.75] sm:text-[1.0625rem] sm:leading-[1.8]"
+            />
+          </div>
         ) : null}
       </MasterEditable>
 

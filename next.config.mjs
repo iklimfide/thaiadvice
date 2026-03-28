@@ -36,6 +36,19 @@ const nextConfig = {
       },
     ];
   },
+  /**
+   * Kök `/{slug}-{timestamp}.webp` → API proxy (dil rotası `/tr` vb. ile çakışmaz: .webp zorunlu).
+   */
+  async rewrites() {
+    return {
+      beforeFiles: [
+        {
+          source: "/:file(([^/]+)-[0-9]{10,}\\.webp)",
+          destination: "/api/image-proxy/:file",
+        },
+      ],
+    };
+  },
 };
 
 export default nextConfig;

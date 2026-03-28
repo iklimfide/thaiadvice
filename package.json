@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "import:thai": "npx tsx scripts/import-thai-txt.ts",
+    "import:thai-export": "npx tsx scripts/import-thai-export-txt.ts",
     "images:webp": "npx tsx scripts/convert-images-to-webp.ts"
   },
   "dependencies": {

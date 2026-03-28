@@ -90,6 +90,10 @@ export function mapQuestionRow(raw: unknown): QuestionRow {
       r.image_url == null || str(r.image_url) === ""
         ? null
         : str(r.image_url),
+    media_seo_text:
+      r.media_seo_text == null || str(r.media_seo_text) === ""
+        ? null
+        : str(r.media_seo_text),
     region: str(r.region),
   };
 }

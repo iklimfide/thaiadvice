@@ -41,6 +41,8 @@ export type QuestionRow = {
   related_slugs: string[];
   created_at: string;
   image_url: string | null;
+  /** Görsel/alt metin notları; gövdede gösterilmez, SEO için */
+  media_seo_text: string | null;
   region: string;
 };
 

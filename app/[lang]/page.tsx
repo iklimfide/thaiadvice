@@ -13,7 +13,9 @@ import {
   categoryLabelForLang,
   normalizeQuestionCategorySlug,
 } from "@/lib/data/question-categories";
+import { SiteJsonLd } from "@/components/seo/SiteJsonLd";
 import { getPublicSiteUrl, pageMetadata } from "@/lib/metadata/site";
+import { SITE_LANGS } from "@/lib/seo/site-languages";
 
 export const dynamic = "force-dynamic";
 
@@ -41,12 +43,21 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     cat.length > 0
       ? `/${lang}?category=${encodeURIComponent(catSlug ?? cat)}`
       : `/${lang}`;
+  const languagePaths: Partial<Record<string, string>> = {};
+  for (const l of SITE_LANGS) {
+    languagePaths[l] =
+      cat.length > 0
+        ? `/${l}?category=${encodeURIComponent(catSlug ?? cat)}`
+        : `/${l}`;
+  }
   return pageMetadata({
     title,
     description:
       "Tayland seyahat ipuçları, destinasyonlar ve güncel içerikler.",
     image: null,
     path,
+    locale: lang,
+    languagePaths,
   });
 }
 
@@ -116,6 +127,7 @@ export default async function LangHome({ params, searchParams }: Props) {
 
   return (
     <div className="space-y-12 sm:space-y-16">
+      <SiteJsonLd lang={lang} />
       <section id="latest-posts" aria-labelledby="latest-posts-heading">
         <h2 id="latest-posts-heading" className="sr-only">
           {latestLabel}

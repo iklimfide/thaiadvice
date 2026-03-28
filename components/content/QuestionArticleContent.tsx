@@ -7,6 +7,7 @@ import { CategoryPageLink } from "@/components/ui/CategoryPageLink";
 import { categoryLabelForLang } from "@/lib/data/question-categories";
 import { displayRegionTitle } from "@/lib/format/display-names";
 import { stripQuickAnswerPrefix } from "@/lib/format/faq-display";
+import { questionArticleJsonLd } from "@/lib/format/question-seo";
 import type { FaqEntryRow } from "@/lib/types/database";
 import type { QuestionRow } from "@/lib/types/database";
 import type { RegionRow } from "@/lib/types/database";
@@ -49,12 +50,19 @@ export function QuestionArticleContent({
   ];
 
   const hasImage = Boolean(question.image_url?.trim());
+  const articleJsonLd = questionArticleJsonLd(question, pagePath);
 
   return (
     <article
       lang={lang === "tr" ? "tr" : "en"}
       className="article-detail mx-auto w-full max-w-3xl px-0 sm:px-1"
     >
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(articleJsonLd).replace(/</g, "\\u003c"),
+        }}
+      />
       <Breadcrumbs items={crumbs} pagePath={pagePath} />
       <header className="mb-8 space-y-5 sm:mb-10 sm:space-y-7">
         <p className="flex flex-wrap items-center gap-x-2 text-xs font-semibold uppercase tracking-wider text-category">
@@ -105,10 +113,23 @@ export function QuestionArticleContent({
           wrapClassName=""
         >
           {question.excerpt?.trim() ? (
-            <p className="article-detail-excerpt text-pretty text-justify text-lg leading-relaxed text-zinc-600">
-              {stripQuickAnswerPrefix(question.excerpt)}
-            </p>
+            <div className="rounded-xl border border-brand/15 bg-gradient-to-br from-brand/[0.06] via-white to-violet-50/40 px-4 py-4 sm:px-5 sm:py-5">
+              <p className="article-detail-excerpt text-pretty text-justify text-lg leading-relaxed text-zinc-700">
+                {stripQuickAnswerPrefix(question.excerpt)}
+              </p>
+            </div>
           ) : null}
+        </MasterEditable>
+        <MasterEditable
+          entity="question"
+          id={question.id}
+          field="media_seo_text"
+          fieldType="textarea"
+          label="SEO: görsel / alt metin (sayfada gösterilmez)"
+          initialValue={question.media_seo_text ?? ""}
+        >
+          {/* Okuyucuya görünmez; master’da bu alan için “Değiştir” çıkar */}
+          <span className="sr-only">SEO medya notu</span>
         </MasterEditable>
       </header>
 
@@ -143,10 +164,12 @@ export function QuestionArticleContent({
         initialValue={question.content}
         wrapClassName="mt-6 w-full max-w-3xl sm:mt-8"
       >
-        <ArticleMarkdownBody
-          markdown={question.content ?? ""}
-          className="article-detail-body text-base leading-[1.75] sm:text-[1.0625rem] sm:leading-[1.8]"
-        />
+        <div className="rounded-2xl border border-zinc-200/90 bg-white p-5 shadow-sm ring-1 ring-zinc-100/80 sm:p-8 md:p-10">
+          <ArticleMarkdownBody
+            markdown={question.content ?? ""}
+            className="article-detail-body text-base leading-[1.75] sm:text-[1.0625rem] sm:leading-[1.8]"
+          />
+        </div>
       </MasterEditable>
 
       <MasterEditable

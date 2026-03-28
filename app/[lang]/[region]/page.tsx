@@ -13,6 +13,7 @@ import {
 } from "@/lib/data/queries";
 import { displayRegionTitle } from "@/lib/format/display-names";
 import { pageMetadata } from "@/lib/metadata/site";
+import { localizedPathAlternates } from "@/lib/seo/language-paths";
 
 export const dynamic = "force-dynamic";
 
@@ -31,6 +32,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description: region.description?.trim() || null,
     image: hasImage ? region.image : null,
     path: `/${lang}/${region.slug}`,
+    locale: lang,
+    languagePaths: localizedPathAlternates(region.slug),
   });
 }
 

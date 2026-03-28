@@ -1,4 +1,9 @@
 import type { Metadata } from "next";
+import {
+  DEFAULT_SITE_LANG,
+  alternateOpenGraphLocales,
+  openGraphLocaleForLang,
+} from "@/lib/seo/site-languages";
 
 const defaultTitle = "ThaiAdvice.com — Tayland rehberi";
 
@@ -47,25 +52,79 @@ export function pageMetadata(input: {
   title: string | null | undefined;
   description: string | null | undefined;
   image: string | null | undefined;
+  /** og:image alt; yoksa başlık kullanılır */
+  imageAlt?: string | null | undefined;
+  /** Kanonik pathname, / ile başlar */
   path: string;
+  /** Sayfa dili (og:locale); hreflang dışı */
+  locale?: string;
+  /**
+   * hreflang: dil kodu → pathname (örn. { tr: '/tr/foo', en: '/en/foo' }).
+   * Yalnızca gerçekten var olan çevirileri verin; uydurma URL eklemeyin.
+   */
+  languagePaths?: Partial<Record<string, string>>;
 }): Metadata {
   const title = input.title?.trim() || defaultTitle;
   const description =
     input.description?.trim() ||
     "Tayland bölgeleri, alt bölgeler ve mekanlar için güncel rehber.";
+  const imageAlt = input.imageAlt?.trim() || title;
   const images = input.image
-    ? [{ url: absoluteUrl(input.image), alt: title }]
+    ? [{ url: absoluteUrl(input.image), alt: imageAlt }]
     : undefined;
+
+  const pathname =
+    input.path.startsWith("/") ? input.path : `/${input.path}`;
+  const canonical = absoluteUrl(pathname);
+
+  const loc = (input.locale ?? "tr").trim().toLowerCase();
+  const ogLocale = openGraphLocaleForLang(loc);
+
+  let alternates: Metadata["alternates"];
+  const rawLangPaths = input.languagePaths;
+  if (rawLangPaths && Object.keys(rawLangPaths).length > 0) {
+    const languages: Record<string, string> = {};
+    for (const [code, p] of Object.entries(rawLangPaths)) {
+      if (!p?.trim()) continue;
+      const rel = p.startsWith("/") ? p : `/${p}`;
+      languages[code.trim()] = absoluteUrl(rel);
+    }
+    if (Object.keys(languages).length > 0) {
+      const xDef =
+        languages[DEFAULT_SITE_LANG] ??
+        languages[loc] ??
+        canonical;
+      languages["x-default"] = xDef;
+      alternates = { canonical, languages };
+    } else {
+      alternates = { canonical };
+    }
+  } else {
+    alternates = { canonical };
+  }
+
+  const definedLangEntries =
+    rawLangPaths == null
+      ? []
+      : Object.entries(rawLangPaths).filter(([, p]) => Boolean(p?.trim()));
+  const ogAlternateLocales =
+    definedLangEntries.length > 1 ? alternateOpenGraphLocales(loc) : undefined;
 
   return {
     title,
     description,
+    alternates,
     openGraph: {
       title,
       description,
-      url: absoluteUrl(input.path),
+      url: canonical,
+      locale: ogLocale,
+      ...(ogAlternateLocales?.length
+        ? { alternateLocale: ogAlternateLocales }
+        : {}),
       images,
       type: "website",
+      siteName: "ThaiAdvice.com",
     },
     twitter: {
       card: images ? "summary_large_image" : "summary",

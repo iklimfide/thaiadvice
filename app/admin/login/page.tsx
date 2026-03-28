@@ -4,6 +4,7 @@ import { LoginForm } from "./LoginForm";
 
 export const metadata = {
   title: "Moderasyon girişi",
+  robots: { index: false, follow: false },
 };
 
 export default function AdminLoginPage() {

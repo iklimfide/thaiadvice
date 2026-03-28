@@ -1,9 +1,25 @@
+import React, { isValidElement } from "react";
 import ReactMarkdown from "react-markdown";
 import type { Components } from "react-markdown";
+import { normalizeArticleBodyMarkdown } from "@/lib/format/article-markdown-normalize";
 import { stripLeadingQuickAnswerBlockFromMarkdown } from "@/lib/format/faq-display";
 import rehypeSanitize from "rehype-sanitize";
 import remarkBreaks from "remark-breaks";
 import remarkGfm from "remark-gfm";
+
+function textFromNodes(children: React.ReactNode): string {
+  if (children == null || typeof children === "boolean") return "";
+  if (typeof children === "string" || typeof children === "number")
+    return String(children);
+  if (Array.isArray(children))
+    return children.map((c) => textFromNodes(c)).join("");
+  if (isValidElement(children) && children.props && "children" in children.props) {
+    return textFromNodes(
+      (children.props as { children?: React.ReactNode }).children
+    );
+  }
+  return "";
+}
 
 type Props = {
   markdown: string;
@@ -16,7 +32,20 @@ type Props = {
  */
 const markdownComponents: Components = {
   h1: ({ node: _node, ...props }) => <h2 {...props} />,
-  h2: ({ node: _node, ...props }) => <h3 {...props} />,
+  h2: ({ node: _node, children, className, ...props }) => {
+    const label = textFromNodes(children);
+    const perlamare = /perlamare/i.test(label);
+    return (
+      <h3
+        {...props}
+        className={[className, perlamare ? "article-perlamare-heading" : ""]
+          .filter(Boolean)
+          .join(" ")}
+      >
+        {children}
+      </h3>
+    );
+  },
   h3: ({ node: _node, ...props }) => <h4 {...props} />,
   h4: ({ node: _node, ...props }) => <h4 {...props} />,
   h5: ({ node: _node, ...props }) => <h4 {...props} />,
@@ -57,11 +86,13 @@ const markdownComponents: Components = {
 };
 
 export function ArticleMarkdownBody({ markdown, className }: Props) {
-  const trimmed = stripLeadingQuickAnswerBlockFromMarkdown(markdown).trim();
+  const trimmed = normalizeArticleBodyMarkdown(
+    stripLeadingQuickAnswerBlockFromMarkdown(markdown).trim()
+  );
   if (!trimmed) return null;
 
   return (
-    <div className={className}>
+    <div className={className} data-article-template="detail">
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkBreaks]}
         rehypePlugins={[rehypeSanitize]}
