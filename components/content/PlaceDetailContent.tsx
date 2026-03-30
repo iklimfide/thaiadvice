@@ -1,5 +1,7 @@
+import { Fragment } from "react";
 import { MasterEditable } from "@/components/admin/MasterEditable";
 import { ArticleMarkdownBody } from "@/components/content/ArticleMarkdownBody";
+import { RelatedPlacesBelowDetail } from "@/components/content/RelatedBelowDetail";
 import { SafeHeroImageBox } from "@/components/ui/SafeImage";
 import { FaqSection } from "@/components/faq/FaqSection";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
@@ -19,6 +21,7 @@ type Props = {
   place: PlaceRow;
   faq: FaqEntryRow[];
   pagePath: string;
+  relatedPlaces?: PlaceRow[];
 };
 
 export function PlaceDetailContent({
@@ -28,6 +31,7 @@ export function PlaceDetailContent({
   place,
   faq,
   pagePath,
+  relatedPlaces = [],
 }: Props) {
   const home = lang === "tr" ? "Ana sayfa" : "Home";
   const regionLabel = displayRegionTitle(region.name, region.slug, lang);
@@ -51,6 +55,7 @@ export function PlaceDetailContent({
   });
 
   return (
+    <Fragment>
     <article
       lang={lang === "tr" ? "tr" : "en"}
       className="article-detail mx-auto w-full max-w-3xl px-0 sm:px-1"
@@ -153,5 +158,12 @@ export function PlaceDetailContent({
 
       <FaqSection items={faq} detailLayout />
     </article>
+    <RelatedPlacesBelowDetail
+      lang={lang}
+      regionSlug={region.slug}
+      subRegionSlug={sub.slug}
+      places={relatedPlaces}
+    />
+    </Fragment>
   );
 }

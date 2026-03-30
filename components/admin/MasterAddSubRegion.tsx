@@ -6,7 +6,7 @@ import {
 } from "@/lib/actions/master-inline";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { useFormState } from "react-dom";
+import { useActionState } from "react";
 import { useMaster } from "./MasterContext";
 
 const initial: MasterInsertSubRegionState = { ok: false };
@@ -23,7 +23,7 @@ export function MasterAddSubRegion({ regionId, lang }: Props) {
   const [open, setOpen] = useState(false);
   const [formKey, setFormKey] = useState(0);
   const lastSuccessMsg = useRef<string>("");
-  const [state, formAction] = useFormState(masterInsertSubRegion, initial);
+  const [state, formAction] = useActionState(masterInsertSubRegion, initial);
 
   useEffect(() => {
     if (!state.ok || !state.message) return;

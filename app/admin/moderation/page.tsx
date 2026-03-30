@@ -44,7 +44,7 @@ export default async function AdminModerationPage() {
 
   const { data: questions, error: questionsError } = await db
     .from("questions")
-    .select("id, slug, title, image_url, lang")
+    .select("id, slug, title, image_url, lang, is_hidden")
     .eq("lang", "tr")
     .order("created_at", { ascending: false })
     .limit(60);

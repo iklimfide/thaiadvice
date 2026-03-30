@@ -51,9 +51,11 @@ CREATE TABLE IF NOT EXISTS public.questions (
   author text NOT NULL DEFAULT 'Perlamare'::text,
   related_slugs text[] NOT NULL DEFAULT '{}'::text[],
   created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
   image_url text,
   media_seo_text text,
   region text NOT NULL DEFAULT 'tayland'::text,
+  is_hidden boolean NOT NULL DEFAULT false,
   CONSTRAINT questions_pkey PRIMARY KEY (id)
 );
 

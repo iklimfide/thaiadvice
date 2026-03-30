@@ -9,12 +9,15 @@ import {
   getSubRegionBySlug,
   listFaqByCategory,
   listQuestionAlternatesForUrl,
+  listRelatedPlacesInSubRegion,
+  listRelatedQuestionsForArticle,
   resolveArticleDetail,
 } from "@/lib/data/queries";
 import type { RegionRow } from "@/lib/types/database";
 import { sitePublicImagePathFromQuestionStorageUrl } from "@/lib/format/site-image-url";
 import { ogImageAltFromMediaSeo } from "@/lib/format/question-seo";
-import { absoluteUrl, pageMetadata } from "@/lib/metadata/site";
+import { getMasterUser } from "@/lib/admin/auth-server";
+import { absoluteUrl, getPublicSiteUrl, pageMetadata } from "@/lib/metadata/site";
 import { localizedPathAlternates } from "@/lib/seo/language-paths";
 
 export const dynamic = "force-dynamic";
@@ -48,11 +51,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { lang, region: regionSlug, sub_region: subSlug, slug } =
     await params;
 
+  const master = await getMasterUser();
   const resolved = await resolveArticleDetail(
     lang,
     regionSlug,
     subSlug,
-    slug
+    slug,
+    { includeHidden: Boolean(master) }
   );
   if (resolved) {
     const q = resolved.question;
@@ -122,11 +127,13 @@ export default async function RegionCategorySlugPage({ params }: Props) {
   const { lang, region: regionSlug, sub_region: subSlug, slug } =
     await params;
 
+  const master = await getMasterUser();
   const resolved = await resolveArticleDetail(
     lang,
     regionSlug,
     subSlug,
-    slug
+    slug,
+    { includeHidden: Boolean(master) }
   );
   if (resolved) {
     const displayRegion: RegionRow =
@@ -134,19 +141,36 @@ export default async function RegionCategorySlugPage({ params }: Props) {
     const matchingSub = resolved.regionRow
       ? await getSubRegionBySlug(resolved.regionRow.id, subSlug)
       : null;
-    const faq = await listFaqByCategory(resolved.question.slug);
-
     const q = resolved.question;
+    const [faq, relatedQuestions] = await Promise.all([
+      listFaqByCategory(q.slug),
+      listRelatedQuestionsForArticle(
+        lang,
+        q.id,
+        q.category,
+        regionSlug,
+        resolved.regionRow,
+        6
+      ),
+    ]);
+    const siteOrigin = getPublicSiteUrl();
     const articlePath = `/${lang}/${q.region}/${categorySlugForUrl(q.category)}/${q.slug}`;
+    const regionBreadcrumbHref =
+      resolved.regionRow != null
+        ? `/${lang}/${resolved.regionRow.slug}`
+        : `/${lang}#regions`;
+
     return (
       <QuestionArticleContent
         lang={lang}
         region={displayRegion}
         question={resolved.question}
         matchingSubRegion={matchingSub}
-        articleCategorySlug={subSlug}
         pagePath={articlePath}
+        regionBreadcrumbHref={regionBreadcrumbHref}
         faq={faq}
+        relatedQuestions={relatedQuestions}
+        siteOrigin={siteOrigin}
       />
     );
   }
@@ -158,7 +182,10 @@ export default async function RegionCategorySlugPage({ params }: Props) {
   if (!sub) notFound();
   const place = await getPlaceBySlug(sub.id, slug);
   if (!place) notFound();
-  const faq = await listFaqByCategory(place.slug);
+  const [faq, relatedPlaces] = await Promise.all([
+    listFaqByCategory(place.slug),
+    listRelatedPlacesInSubRegion(sub.id, place.id, 6),
+  ]);
 
   const placePath = `/${lang}/${regionSlug}/${subSlug}/${slug}`;
   return (
@@ -169,6 +196,7 @@ export default async function RegionCategorySlugPage({ params }: Props) {
       place={place}
       faq={faq}
       pagePath={placePath}
+      relatedPlaces={relatedPlaces}
     />
   );
 }

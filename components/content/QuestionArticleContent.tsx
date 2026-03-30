@@ -1,10 +1,16 @@
+import { Fragment } from "react";
 import { MasterEditable } from "@/components/admin/MasterEditable";
+import { ArticleShareFooter } from "@/components/content/ArticleShareFooter";
 import { ArticleMarkdownBody } from "@/components/content/ArticleMarkdownBody";
+import { RelatedArticlesBelowDetail } from "@/components/content/RelatedBelowDetail";
 import { SafeHeroImageBox } from "@/components/ui/SafeImage";
 import { FaqSection } from "@/components/faq/FaqSection";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { CategoryPageLink } from "@/components/ui/CategoryPageLink";
-import { categoryLabelForLang } from "@/lib/data/question-categories";
+import {
+  categoryLabelForLang,
+  categorySlugForUrl,
+} from "@/lib/data/question-categories";
 import { displayRegionTitle } from "@/lib/format/display-names";
 import { stripQuickAnswerPrefix } from "@/lib/format/faq-display";
 import { questionArticleJsonLd } from "@/lib/format/question-seo";
@@ -18,11 +24,13 @@ type Props = {
   region: RegionRow;
   question: QuestionRow;
   matchingSubRegion: SubRegionRow | null;
-  /** URL’deki kategori segmenti; breadcrumb ve kategori linki için */
-  articleCategorySlug: string;
   /** Breadcrumb JSON-LD ve kısaltılmış satır için geçerli pathname */
   pagePath: string;
+  /** Bölge kırıntısı: DB’de regions satırı yoksa topbar’daki Bölgeler gibi ana sayfa */
+  regionBreadcrumbHref?: string;
   faq: FaqEntryRow[];
+  relatedQuestions?: QuestionRow[];
+  siteOrigin: string;
 };
 
 export function QuestionArticleContent({
@@ -30,9 +38,11 @@ export function QuestionArticleContent({
   region,
   question,
   matchingSubRegion,
-  articleCategorySlug,
   pagePath,
+  regionBreadcrumbHref,
   faq,
+  relatedQuestions = [],
+  siteOrigin,
 }: Props) {
   const home = lang === "tr" ? "Ana sayfa" : "Home";
   const categoryLabel = matchingSubRegion
@@ -40,19 +50,26 @@ export function QuestionArticleContent({
     : categoryLabelForLang(question.category, lang);
 
   const regionLabel = displayRegionTitle(region.name, region.slug, lang);
-  const categoryListHref = `/${lang}/${region.slug}/${matchingSubRegion?.slug ?? articleCategorySlug}`;
+  const regionCrumbHref =
+    regionBreadcrumbHref ?? `/${lang}/${region.slug}`;
+  /** URL’deki segment gerçek alt bölge değilse (makale kategorisi) liste sayfası yok — topbar Kategoriler ile aynı */
+  const categoryListHref = matchingSubRegion
+    ? `/${lang}/${region.slug}/${matchingSubRegion.slug}`
+    : `/${lang}?category=${encodeURIComponent(categorySlugForUrl(question.category))}#latest-posts`;
 
   const crumbs = [
     { label: home, href: `/${lang}` },
-    { label: regionLabel, href: `/${lang}/${region.slug}` },
+    { label: regionLabel, href: regionCrumbHref },
     { label: categoryLabel, href: categoryListHref },
     { label: question.title },
   ];
 
   const hasImage = Boolean(question.image_url?.trim());
   const articleJsonLd = questionArticleJsonLd(question, pagePath);
+  const shareUrl = `${siteOrigin.replace(/\/$/, "")}${pagePath.startsWith("/") ? pagePath : `/${pagePath}`}`;
 
   return (
+    <Fragment>
     <article
       lang={lang === "tr" ? "tr" : "en"}
       className="article-detail mx-auto w-full max-w-3xl px-0 sm:px-1"
@@ -64,8 +81,24 @@ export function QuestionArticleContent({
         }}
       />
       <Breadcrumbs items={crumbs} pagePath={pagePath} />
+      {question.is_hidden ? (
+        <div
+          role="status"
+          className="mb-6 rounded-lg bg-violet-100/95 px-4 py-3.5 text-sm leading-snug text-violet-950"
+        >
+          <span className="font-semibold">
+            {lang === "tr" ? "Gizli makale" : "Hidden article"}
+          </span>
+          <span className="text-violet-900/85">
+            {" — "}
+            {lang === "tr"
+              ? "Ziyaretçiler ana sayfada ve menüde görmez; doğrudan bağlantı da onlar için yok. Yalnızca master oturumunda bu sayfa açılır."
+              : "Hidden from home and navigation; visitors get not-found on the public URL. Only a master session can open this page."}
+          </span>
+        </div>
+      ) : null}
       <header className="mb-8 space-y-5 sm:mb-10 sm:space-y-7">
-        <p className="flex flex-wrap items-center gap-x-2 text-xs font-semibold uppercase tracking-wider text-category">
+        <div className="flex flex-wrap items-center gap-x-2 text-xs font-semibold uppercase tracking-wider text-category">
           <MasterEditable
             entity="question"
             id={question.id}
@@ -89,7 +122,7 @@ export function QuestionArticleContent({
           >
             <span>{question.author}</span>
           </MasterEditable>
-        </p>
+        </div>
         <MasterEditable
           entity="question"
           id={question.id}
@@ -98,6 +131,8 @@ export function QuestionArticleContent({
           label="Başlık"
           initialValue={question.title}
           wrapClassName=""
+          showQuestionVisibilityToggle
+          questionIsHidden={question.is_hidden}
         >
           <h1 className="border-b-[3px] border-brand/35 pb-4 font-serif text-2xl font-bold leading-[1.15] tracking-tight text-zinc-900 sm:pb-5 sm:text-4xl sm:leading-tight">
             {question.title}
@@ -172,6 +207,14 @@ export function QuestionArticleContent({
         </div>
       </MasterEditable>
 
+      <ArticleShareFooter
+        shareUrl={shareUrl}
+        title={question.title}
+        lang={lang}
+        articleId={question.id}
+        className="w-full max-w-3xl"
+      />
+
       <MasterEditable
         entity="question"
         id={question.id}
@@ -221,5 +264,7 @@ export function QuestionArticleContent({
 
       <FaqSection items={faq} detailLayout />
     </article>
+    <RelatedArticlesBelowDetail lang={lang} questions={relatedQuestions} />
+    </Fragment>
   );
 }

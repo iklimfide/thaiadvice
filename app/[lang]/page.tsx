@@ -13,8 +13,9 @@ import {
   categoryLabelForLang,
   normalizeQuestionCategorySlug,
 } from "@/lib/data/question-categories";
+import { getMasterUser } from "@/lib/admin/auth-server";
 import { SiteJsonLd } from "@/components/seo/SiteJsonLd";
-import { getPublicSiteUrl, pageMetadata } from "@/lib/metadata/site";
+import { pageMetadata } from "@/lib/metadata/site";
 import { SITE_LANGS } from "@/lib/seo/site-languages";
 
 export const dynamic = "force-dynamic";
@@ -79,9 +80,10 @@ export default async function LangHome({ params, searchParams }: Props) {
         ? (rawQ[0] ?? "")
         : "";
 
+  const master = await getMasterUser();
   const [{ regions, error: regionsError }, allQuestions] = await Promise.all([
     loadRegionsFromSupabase(),
-    listQuestionsForLang(lang),
+    listQuestionsForLang(lang, { includeHidden: Boolean(master) }),
   ]);
   const filterCanon =
     categoryFilter.length > 0
@@ -103,7 +105,6 @@ export default async function LangHome({ params, searchParams }: Props) {
     searchQuery,
     lang
   );
-  const siteOrigin = getPublicSiteUrl();
   const searchTrimmed = searchQuery.trim();
   const categoryHiddenValue =
     filterCanon != null
@@ -161,11 +162,7 @@ export default async function LangHome({ params, searchParams }: Props) {
           <ul className="grid grid-cols-1 gap-6 sm:gap-8 md:grid-cols-2 xl:grid-cols-3">
             {questions.map((q) => (
               <li key={q.id} className="min-w-0">
-                <PostCard
-                  lang={lang}
-                  question={q}
-                  siteOrigin={siteOrigin}
-                />
+                <PostCard lang={lang} question={q} />
               </li>
             ))}
           </ul>

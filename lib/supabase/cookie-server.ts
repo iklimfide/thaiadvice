@@ -17,9 +17,9 @@ function getUrlAndKey(): { url: string; key: string } {
 }
 
 /** Cookie tabanlı oturum — Server Components, Server Actions, Route Handlers. */
-export function createServerSupabaseForAuth() {
+export async function createServerSupabaseForAuth() {
   const { url, key } = getUrlAndKey();
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
 
   return createServerClient(url, key, {
     cookies: {

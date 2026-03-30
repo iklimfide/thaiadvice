@@ -69,7 +69,7 @@ export function questionArticleJsonLd(
     headline: question.title,
     description: desc,
     datePublished: question.created_at,
-    dateModified: question.created_at,
+    dateModified: question.updated_at ?? question.created_at,
     author: {
       "@type": "Person",
       name: question.author?.trim() || "Perlamare",

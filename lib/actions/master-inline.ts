@@ -160,6 +160,36 @@ export async function masterUpdateQuestionRelatedSlugs(
   return { ok: true, message: "İlişkili slug’lar güncellendi." };
 }
 
+export async function masterSetQuestionHidden(
+  _prev: MasterInlineState,
+  formData: FormData
+): Promise<MasterInlineState> {
+  const user = await getMasterUser();
+  if (!user) return { ok: false, message: "Yetkisiz." };
+
+  const id = String(formData.get("id") ?? "").trim();
+  const pathname = String(formData.get("pathname") ?? "/").trim() || "/";
+  const lang = String(formData.get("lang") ?? "").trim();
+  const raw = String(formData.get("is_hidden") ?? "").trim();
+  const is_hidden = raw === "true" || raw === "1";
+
+  if (!id) return { ok: false, message: "Geçersiz istek." };
+
+  const db = getSupabaseServiceRole();
+  const { error } = await db
+    .from("questions")
+    .update({ is_hidden })
+    .eq("id", id);
+
+  if (error) return { ok: false, message: "Kaydedilemedi." };
+  revalidateArticlePaths(pathname, lang);
+  if (lang) revalidatePath(`/${lang}`, "layout");
+  return {
+    ok: true,
+    message: is_hidden ? "Makale gizlendi." : "Makale yayında.",
+  };
+}
+
 export async function masterUpdatePlaceField(
   _prev: MasterInlineState,
   formData: FormData

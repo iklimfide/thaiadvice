@@ -6,7 +6,7 @@ import {
   uploadSubmissionImage,
   type ModerationState,
 } from "@/lib/actions/moderation";
-import { useFormState } from "react-dom";
+import { useActionState } from "react";
 
 export type PendingSubmission = {
   id: string;
@@ -54,8 +54,8 @@ export function ModerationList({
 }
 
 function SubmissionRow({ submission: s }: { submission: PendingSubmission }) {
-  const [urlState, urlAction] = useFormState(setSubmissionImageUrl, initial);
-  const [upState, upAction] = useFormState(uploadSubmissionImage, initial);
+  const [urlState, urlAction] = useActionState(setSubmissionImageUrl, initial);
+  const [upState, upAction] = useActionState(uploadSubmissionImage, initial);
   const slugHint = slugSegmentForStorage(s.title);
 
   return (
@@ -115,7 +115,6 @@ function SubmissionRow({ submission: s }: { submission: PendingSubmission }) {
 
       <form
         action={upAction}
-        encType="multipart/form-data"
         className="space-y-2 border-t border-zinc-100 pt-4"
       >
         <input type="hidden" name="id" value={s.id} />

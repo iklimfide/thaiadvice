@@ -40,10 +40,14 @@ export type QuestionRow = {
   author: string;
   related_slugs: string[];
   created_at: string;
+  /** Son güncelleme; DB’de yoksa map satırında created_at ile doldurulur */
+  updated_at: string;
   image_url: string | null;
   /** Görsel/alt metin notları; gövdede gösterilmez, SEO için */
   media_seo_text: string | null;
   region: string;
+  /** true: anon listeler ve detayda gizli; master URL ile görebilir */
+  is_hidden: boolean;
 };
 
 /** public.faq_entries */

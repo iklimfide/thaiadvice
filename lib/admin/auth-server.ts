@@ -5,7 +5,7 @@ import { isMasterEmail } from "@/lib/admin/master";
 import { createServerSupabaseForAuth } from "@/lib/supabase/cookie-server";
 
 export async function getMasterUser() {
-  const supabase = createServerSupabaseForAuth();
+  const supabase = await createServerSupabaseForAuth();
   const {
     data: { user },
     error,
@@ -15,7 +15,7 @@ export async function getMasterUser() {
 }
 
 export async function assertMasterOrRedirect() {
-  const supabase = createServerSupabaseForAuth();
+  const supabase = await createServerSupabaseForAuth();
   const {
     data: { user },
   } = await supabase.auth.getUser();

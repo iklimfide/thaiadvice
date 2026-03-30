@@ -1,17 +1,16 @@
 /**
- * Soru kapak görselleri (blog-images/questions/.../dosya.webp) için sitede kısa URL.
- * DB’de tam Supabase adresi durur; img src / OG için kök yol kullanılabilir.
+ * Soru kapak görselleri için eskiden kök `/{slug}-{timestamp}.webp` + `/api/image-proxy`
+ * kullanılıyordu; bu yol her istekte DB + SUPABASE_SERVICE_ROLE_KEY gerektirir — anahtar
+ * eksik veya sorgu hata verirse kapak görseli hiç görünmez.
+ *
+ * Şimdilik her zaman `null`: tarayıcı ve OG doğrudan DB’deki public Supabase URL’ine gider
+ * (`blog-images` bucket’ı public olmalı). Eski kısa URL’ler `next.config` rewrite ile
+ * proxy’de çalışmaya devam eder.
  */
 export function sitePublicImagePathFromQuestionStorageUrl(
-  url: string | null | undefined
+  _url: string | null | undefined
 ): string | null {
-  const u = url?.trim();
-  if (!u) return null;
-  const m = u.match(/\/blog-images\/questions\/[^/]+\/([^/?#]+\.webp)$/i);
-  if (!m?.[1]) return null;
-  const file = m[1];
-  if (!/^[^/\\?#]+-[0-9]{10,}\.webp$/i.test(file)) return null;
-  return `/${file}`;
+  return null;
 }
 
 export function shouldUseSiteProxyWebpPath(pathOrUrl: string): boolean {

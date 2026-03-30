@@ -34,6 +34,17 @@ const nextConfig = {
         destination: "/icon.png",
         permanent: false,
       },
+      /** Eski / yanlış URL: guides ayrı route değil; bölge slug'ı sanılıp 404 oluyordu. */
+      {
+        source: "/tr/guides/:path*",
+        destination: "/tr",
+        permanent: true,
+      },
+      {
+        source: "/en/guides/:path*",
+        destination: "/en",
+        permanent: true,
+      },
     ];
   },
   /**

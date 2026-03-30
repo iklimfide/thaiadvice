@@ -24,16 +24,41 @@ import type {
   SubRegionRow,
 } from "@/lib/types/database";
 
+const SUPABASE_LOG_MSG_MAX = 400;
+
+/** Cloudflare/502 responses arrive as HTML in error.message — avoid megabyte console dumps. */
+function summarizeSupabaseErrorMessage(raw: string): string {
+  const t = raw.trim();
+  if (t.startsWith("<!DOCTYPE") || t.startsWith("<html")) {
+    const title = t.match(/<title[^>]*>([^<]*)<\/title>/i)?.[1]?.trim();
+    const is502 = /502|Bad gateway/i.test(t);
+    if (title) {
+      return is502
+        ? `Upstream HTML (likely 502): ${title}`
+        : `Upstream HTML instead of JSON: ${title}`;
+    }
+    return is502
+      ? "Upstream returned HTML 502 Bad Gateway page (body omitted)."
+      : "Upstream returned HTML instead of JSON (body omitted).";
+  }
+  if (t.length > SUPABASE_LOG_MSG_MAX) {
+    return `${t.slice(0, SUPABASE_LOG_MSG_MAX)}… [truncated, ${t.length} chars]`;
+  }
+  return t;
+}
+
 function logSupabase(
   context: string,
   err: { message?: string; code?: string; details?: string; hint?: string } | Error
 ) {
-  const msg = "message" in err && err.message ? err.message : String(err);
+  const raw =
+    "message" in err && err.message ? err.message : String(err);
+  const msg = summarizeSupabaseErrorMessage(raw);
   const extra =
     err && typeof err === "object" && "code" in err
       ? { code: err.code, details: err.details, hint: err.hint }
       : {};
-  console.error(`[Supabase:${context}]`, msg, extra, err);
+  console.error(`[Supabase:${context}]`, msg, extra);
 }
 
 /** Tek istekte layout + ana sayfa aynı sonucu paylaşır */
@@ -154,16 +179,18 @@ export async function getQuestionByPath(
   lang: string,
   regionKey: string,
   category: string,
-  articleSlug: string
+  articleSlug: string,
+  includeHidden = false
 ): Promise<QuestionRow | null> {
-  const { data, error } = await getSupabase()
+  let q = getSupabase()
     .from("questions")
     .select("*")
     .eq("lang", lang)
     .eq("region", regionKey)
     .eq("category", category)
-    .eq("slug", articleSlug)
-    .maybeSingle();
+    .eq("slug", articleSlug);
+  if (!includeHidden) q = q.eq("is_hidden", false);
+  const { data, error } = await q.maybeSingle();
   if (error) {
     logSupabase("getQuestionByPath", error);
     return null;
@@ -207,27 +234,31 @@ export async function resolveArticleDetail(
   lang: string,
   regionSegment: string,
   categorySegment: string,
-  articleSlug: string
+  articleSlug: string,
+  options?: { includeHidden?: boolean }
 ): Promise<ResolvedArticleDetail | null> {
   const slug = articleSlug.trim();
   if (!slug) return null;
 
+  const includeHidden = Boolean(options?.includeHidden);
   const regionRow = await getRegionBySlug(regionSegment);
   const rKeys = uniqueRegionKeys(regionSegment, regionRow);
   const cKeys = categoryKeysForUrlResolution(categorySegment);
 
   for (const rk of rKeys) {
     for (const ck of cKeys) {
-      const q = await getQuestionByPath(lang, rk, ck, slug);
+      const q = await getQuestionByPath(lang, rk, ck, slug, includeHidden);
       if (q) return { question: q, regionRow };
     }
   }
 
-  const { data, error } = await getSupabase()
+  let slugQuery = getSupabase()
     .from("questions")
     .select("*")
     .eq("lang", lang)
     .eq("slug", slug);
+  if (!includeHidden) slugQuery = slugQuery.eq("is_hidden", false);
+  const { data, error } = await slugQuery;
 
   if (error) {
     logSupabase("resolveArticleDetail(slug)", error);
@@ -297,13 +328,16 @@ export async function listQuestionAlternatesForUrl(
 }
 
 export async function listQuestionsForLang(
-  lang: string
+  lang: string,
+  options?: { includeHidden?: boolean }
 ): Promise<QuestionRow[]> {
-  const { data, error } = await getSupabase()
+  let q = getSupabase()
     .from("questions")
     .select("*")
     .eq("lang", lang)
     .order("created_at", { ascending: false });
+  if (!options?.includeHidden) q = q.eq("is_hidden", false);
+  const { data, error } = await q;
   if (error) {
     logSupabase("listQuestionsForLang", error);
     return [];
@@ -321,6 +355,81 @@ export async function listQuestionsForLang(
   return rows.map(mapQuestionRow);
 }
 
+const RELATED_QUESTIONS_FETCH_CAP = 150;
+
+/**
+ * Makale detayı: aynı dil, mevcut makale hariç.
+ * Öncelik: aynı kategori + bölge → aynı kategori → aynı bölge → son yayınlar.
+ */
+export async function listRelatedQuestionsForArticle(
+  lang: string,
+  excludeQuestionId: string,
+  currentCategory: string,
+  urlRegionSegment: string,
+  regionRow: RegionRow | null,
+  limit = 6
+): Promise<QuestionRow[]> {
+  const rKeys = uniqueRegionKeys(urlRegionSegment, regionRow);
+  const catCanon = normalizeQuestionCategorySlug(currentCategory);
+
+  const { data, error } = await getSupabase()
+    .from("questions")
+    .select("*")
+    .eq("lang", lang)
+    .eq("is_hidden", false)
+    .neq("id", excludeQuestionId)
+    .order("created_at", { ascending: false })
+    .limit(RELATED_QUESTIONS_FETCH_CAP);
+
+  if (error) {
+    logSupabase("listRelatedQuestionsForArticle", error);
+    return [];
+  }
+
+  const rows = (data ?? []).map(mapQuestionRow);
+
+  const regionMatch = (q: QuestionRow) =>
+    rKeys.some((rk) => rk.toLowerCase() === q.region.trim().toLowerCase());
+
+  const catMatch = (q: QuestionRow) => {
+    if (catCanon) {
+      return normalizeQuestionCategorySlug(q.category) === catCanon;
+    }
+    return (
+      q.category.trim().toLowerCase() === currentCategory.trim().toLowerCase()
+    );
+  };
+
+  const picked: QuestionRow[] = [];
+  const seen = new Set<string>();
+
+  const pushUnique = (candidates: QuestionRow[]) => {
+    for (const q of candidates) {
+      if (picked.length >= limit) return;
+      if (seen.has(q.id)) continue;
+      seen.add(q.id);
+      picked.push(q);
+    }
+  };
+
+  pushUnique(rows.filter((q) => catMatch(q) && regionMatch(q)));
+  pushUnique(rows.filter((q) => catMatch(q)));
+  pushUnique(rows.filter((q) => regionMatch(q)));
+  pushUnique(rows);
+
+  return picked.slice(0, limit);
+}
+
+/** Aynı alt bölgedeki diğer mekânlar (alfabetik sırada, mevcut hariç). */
+export async function listRelatedPlacesInSubRegion(
+  subRegionId: string,
+  excludePlaceId: string,
+  limit = 6
+): Promise<PlaceRow[]> {
+  const all = await listPlacesForSubRegion(subRegionId);
+  return all.filter((p) => p.id !== excludePlaceId).slice(0, limit);
+}
+
 export type NavQuestionCategory = { slug: string; label: string };
 
 /** Header menüsü: kanonik sıra, yalnızca içerik olan slug’lar */
@@ -330,7 +439,8 @@ export const loadNavQuestionCategories = cache(
     const { data, error } = await getSupabase()
       .from("questions")
       .select("category")
-      .eq("lang", lang);
+      .eq("lang", lang)
+      .eq("is_hidden", false);
     if (error) {
       logSupabase("loadNavQuestionCategories", error);
       return [];

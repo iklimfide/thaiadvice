@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { MasterEditable } from "@/components/admin/MasterEditable";
 import { SafeImage } from "@/components/ui/SafeImage";
-import { ArticleShareFooter } from "@/components/home/ArticleShareFooter";
 import {
   categoryLabelForLang,
   categorySlugForUrl,
@@ -18,19 +17,24 @@ import type { QuestionRow } from "@/lib/types/database";
 type Props = {
   lang: string;
   question: QuestionRow;
-  siteOrigin: string;
 };
 
-export function PostCard({ lang, question, siteOrigin }: Props) {
+export function PostCard({ lang, question }: Props) {
   const catSeg = categorySlugForUrl(question.category);
   const href = `/${lang}/${question.region}/${catSeg}/${question.slug}`;
   const categoryDisplay = categoryLabelForLang(question.category, lang);
-  const shareUrl = `${siteOrigin.replace(/\/$/, "")}${href}`;
   const dateStr = formatPostDate(question.created_at, lang);
   const hasImage = Boolean(question.image_url?.trim());
+  const isHidden = question.is_hidden;
 
   return (
-    <article className="flex h-full flex-col overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm transition hover:border-brand/30 hover:shadow-md">
+    <article
+      className={`flex h-full flex-col overflow-hidden rounded-lg border shadow-sm transition hover:shadow-md ${
+        isHidden
+          ? "border-violet-200/80 bg-violet-50/95 hover:border-violet-300/90"
+          : "border-zinc-200 bg-white hover:border-brand/30"
+      }`}
+    >
       <MasterEditable
         entity="question"
         id={question.id}
@@ -40,8 +44,14 @@ export function PostCard({ lang, question, siteOrigin }: Props) {
         initialValue={question.image_url ?? ""}
         storageSlug={question.slug}
         hasMedia={hasImage}
+        wrapClassName={isHidden ? "bg-violet-100/35" : ""}
       >
-        <Link href={href} className="relative block aspect-[16/10] w-full bg-zinc-100">
+        <Link
+          href={href}
+          className={`relative block aspect-[16/10] w-full ${
+            isHidden ? "bg-violet-100/50" : "bg-zinc-100"
+          }`}
+        >
           {hasImage ? (
             <SafeImage
               fill
@@ -66,6 +76,14 @@ export function PostCard({ lang, question, siteOrigin }: Props) {
         </Link>
       </MasterEditable>
       <div className="flex flex-1 flex-col p-4 sm:p-5">
+        {isHidden ? (
+          <p
+            className="mb-3 rounded-md bg-violet-200/70 px-2.5 py-1.5 text-center text-[11px] font-bold uppercase tracking-wide text-violet-950"
+            role="status"
+          >
+            {lang === "tr" ? "Gizli — ziyaretçilere kapalı" : "Hidden — not public"}
+          </p>
+        ) : null}
         <div className="text-center">
           <MasterEditable
             entity="question"
@@ -88,6 +106,8 @@ export function PostCard({ lang, question, siteOrigin }: Props) {
           label="Başlık"
           initialValue={question.title}
           wrapClassName="mt-2"
+          showQuestionVisibilityToggle
+          questionIsHidden={question.is_hidden}
         >
           <Link href={href}>
             <h2 className="font-serif text-lg font-bold leading-snug text-zinc-900 transition hover:text-brand sm:text-xl">
@@ -134,7 +154,6 @@ export function PostCard({ lang, question, siteOrigin }: Props) {
             </p>
           )}
         </MasterEditable>
-        <ArticleShareFooter shareUrl={shareUrl} title={question.title} />
         <Link
           href={href}
           className="mt-3 inline-block text-sm font-semibold text-brand hover:underline"

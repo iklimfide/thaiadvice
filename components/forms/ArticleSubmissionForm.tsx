@@ -1,6 +1,7 @@
 "use client";
 
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState } from "react";
+import { useFormStatus } from "react-dom";
 import {
   submitArticleSuggestion,
   type FormState,
@@ -25,7 +26,7 @@ function SubmitButton() {
 type FormProps = { lang?: string };
 
 export function ArticleSubmissionForm({ lang = "tr" }: FormProps) {
-  const [state, formAction] = useFormState(submitArticleSuggestion, initial);
+  const [state, formAction] = useActionState(submitArticleSuggestion, initial);
 
   return (
     <form

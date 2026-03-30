@@ -86,6 +86,10 @@ export function mapQuestionRow(raw: unknown): QuestionRow {
     author: str(r.author),
     related_slugs,
     created_at: str(r.created_at),
+    updated_at:
+      r.updated_at != null && String(r.updated_at).trim() !== ""
+        ? str(r.updated_at)
+        : str(r.created_at),
     image_url:
       r.image_url == null || str(r.image_url) === ""
         ? null
@@ -95,6 +99,7 @@ export function mapQuestionRow(raw: unknown): QuestionRow {
         ? null
         : str(r.media_seo_text),
     region: str(r.region),
+    is_hidden: Boolean(r.is_hidden),
   };
 }
 

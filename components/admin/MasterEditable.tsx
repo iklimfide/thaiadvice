@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  masterSetQuestionHidden,
   masterUpdatePlaceField,
   masterUpdateQuestionField,
   masterUpdateQuestionRelatedSlugs,
@@ -17,8 +18,7 @@ import {
   type ModerationState,
 } from "@/lib/actions/moderation";
 import { useParams, usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
-import { useFormState } from "react-dom";
+import { useActionState, useEffect, useState } from "react";
 import { useMaster } from "./MasterContext";
 
 type FieldType =
@@ -42,6 +42,9 @@ type Props = {
   /** fieldType image: içerik yoksa bile master’a çerçeve göster */
   hasMedia?: boolean;
   wrapClassName?: string;
+  /** Yalnız entity=question; başlık satırında Gizle/Göster */
+  showQuestionVisibilityToggle?: boolean;
+  questionIsHidden?: boolean;
 };
 
 const initialInline: MasterInlineState = { ok: true };
@@ -58,6 +61,8 @@ export function MasterEditable({
   storageSlug,
   hasMedia = true,
   wrapClassName = "",
+  showQuestionVisibilityToggle = false,
+  questionIsHidden = false,
 }: Props) {
   const { isMaster } = useMaster();
   const pathname = usePathname();
@@ -70,57 +75,61 @@ export function MasterEditable({
     storageSlug?.trim() || routeSlug || id.replace(/-/g, "").slice(0, 12);
   const [open, setOpen] = useState(false);
 
-  const [qState, qAction] = useFormState(
+  const [qState, qAction] = useActionState(
     masterUpdateQuestionField,
     initialInline
   );
-  const [relState, relAction] = useFormState(
+  const [relState, relAction] = useActionState(
     masterUpdateQuestionRelatedSlugs,
     initialInline
   );
-  const [pState, pAction] = useFormState(
+  const [pState, pAction] = useActionState(
     masterUpdatePlaceField,
     initialInline
   );
-  const [rState, rAction] = useFormState(
+  const [rState, rAction] = useActionState(
     masterUpdateRegionField,
     initialInline
   );
-  const [regionUrlState, regionUrlAction] = useFormState(
+  const [regionUrlState, regionUrlAction] = useActionState(
     masterUpdateRegionField,
     initialInline
   );
 
-  const [imgUrlState, imgUrlAction] = useFormState(
+  const [imgUrlState, imgUrlAction] = useActionState(
     setQuestionImageUrl,
     initialMod
   );
-  const [imgUpState, imgUpAction] = useFormState(
+  const [imgUpState, imgUpAction] = useActionState(
     uploadQuestionImage,
     initialMod
   );
-  const [placeUrlState, placeUrlAction] = useFormState(
+  const [placeUrlState, placeUrlAction] = useActionState(
     masterUpdatePlaceField,
     initialInline
   );
-  const [placeUpState, placeUpAction] = useFormState(
+  const [placeUpState, placeUpAction] = useActionState(
     masterUploadPlaceImage,
     initialInline
   );
-  const [regionUpState, regionUpAction] = useFormState(
+  const [regionUpState, regionUpAction] = useActionState(
     masterUploadRegionImage,
     initialInline
   );
-  const [srState, srAction] = useFormState(
+  const [srState, srAction] = useActionState(
     masterUpdateSubRegionField,
     initialInline
   );
-  const [subRegionUrlState, subRegionUrlAction] = useFormState(
+  const [subRegionUrlState, subRegionUrlAction] = useActionState(
     masterUpdateSubRegionField,
     initialInline
   );
-  const [subRegionUpState, subRegionUpAction] = useFormState(
+  const [subRegionUpState, subRegionUpAction] = useActionState(
     masterUploadSubRegionImage,
+    initialInline
+  );
+  const [visState, visAction] = useActionState(
+    masterSetQuestionHidden,
     initialInline
   );
 
@@ -142,8 +151,13 @@ export function MasterEditable({
 
   const btnClass =
     "shrink-0 rounded border border-amber-300 bg-amber-100/80 px-2 py-0.5 text-xs font-medium text-amber-950 hover:bg-amber-200/90";
+  const visBtnClass = questionIsHidden
+    ? "shrink-0 rounded border border-emerald-400 bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-950 hover:bg-emerald-100"
+    : "shrink-0 rounded border border-zinc-400 bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-800 hover:bg-zinc-200";
 
   const showImageShell = fieldType === "image" && !hasMedia;
+  const showVis =
+    entity === "question" && showQuestionVisibilityToggle;
 
   return (
     <div className={wrapClassName}>
@@ -161,10 +175,36 @@ export function MasterEditable({
             children
           )}
         </div>
-        <button type="button" className={btnClass} onClick={() => setOpen(true)}>
-          Değiştir
-        </button>
+        <div className="flex shrink-0 flex-wrap items-center gap-1">
+          <button type="button" className={btnClass} onClick={() => setOpen(true)}>
+            Değiştir
+          </button>
+          {showVis ? (
+            <form action={visAction}>
+              <input type="hidden" name="id" value={id} />
+              <input type="hidden" name="pathname" value={pathname} />
+              <input type="hidden" name="lang" value={lang} />
+              <input
+                type="hidden"
+                name="is_hidden"
+                value={questionIsHidden ? "false" : "true"}
+              />
+              <button type="submit" className={visBtnClass}>
+                {questionIsHidden ? "Göster" : "Gizle"}
+              </button>
+            </form>
+          ) : null}
+        </div>
       </div>
+      {showVis && visState.message ? (
+        <p
+          className={
+            visState.ok ? "mt-1 text-xs text-emerald-700" : "mt-1 text-xs text-red-600"
+          }
+        >
+          {visState.message}
+        </p>
+      ) : null}
 
       {open ? (
         <div
@@ -220,7 +260,6 @@ export function MasterEditable({
                 </form>
                 <form
                   action={imgUpAction}
-                  encType="multipart/form-data"
                   className="space-y-2 border-t border-zinc-100 pt-4"
                 >
                   <input type="hidden" name="id" value={id} />
@@ -286,7 +325,6 @@ export function MasterEditable({
                 </form>
                 <form
                   action={placeUpAction}
-                  encType="multipart/form-data"
                   className="space-y-2 border-t border-zinc-100 pt-4"
                 >
                   <input type="hidden" name="id" value={id} />
@@ -354,7 +392,6 @@ export function MasterEditable({
                 </form>
                 <form
                   action={regionUpAction}
-                  encType="multipart/form-data"
                   className="space-y-2 border-t border-zinc-100 pt-4"
                 >
                   <input type="hidden" name="id" value={id} />
@@ -422,7 +459,6 @@ export function MasterEditable({
                 </form>
                 <form
                   action={subRegionUpAction}
-                  encType="multipart/form-data"
                   className="space-y-2 border-t border-zinc-100 pt-4"
                 >
                   <input type="hidden" name="id" value={id} />
