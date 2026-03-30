@@ -1,7 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
-import { useFormStatus } from "react-dom";
+import { useFormStatus, useFormState } from "react-dom";
 import {
   submitArticleSuggestion,
   type FormState,
@@ -10,15 +9,16 @@ import { QUESTION_CATEGORY_DEFS } from "@/lib/data/question-categories";
 
 const initial: FormState = { ok: false };
 
-function SubmitButton() {
+function SubmitButton({ lang }: { lang: string }) {
   const { pending } = useFormStatus();
+  const tr = lang === "tr";
   return (
     <button
       type="submit"
       disabled={pending}
       className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-dark disabled:opacity-60"
     >
-      {pending ? "Gönderiliyor…" : "Gönder"}
+      {pending ? (tr ? "Gönderiliyor…" : "Sending…") : tr ? "Gönder" : "Submit"}
     </button>
   );
 }
@@ -26,22 +26,20 @@ function SubmitButton() {
 type FormProps = { lang?: string };
 
 export function ArticleSubmissionForm({ lang = "tr" }: FormProps) {
-  const [state, formAction] = useActionState(submitArticleSuggestion, initial);
+  const [state, formAction] = useFormState(submitArticleSuggestion, initial);
 
   return (
     <form
       action={formAction}
       className="space-y-4 rounded-xl border border-zinc-200 bg-white p-6 shadow-sm"
     >
-      <h2 className="text-lg font-semibold text-zinc-900">İçerik önerisi</h2>
-      <p className="text-sm text-zinc-600">
-        Gönderiler <code className="rounded bg-zinc-100 px-1">article_submissions</code>{" "}
-        tablosuna kaydedilir (moderasyon sonrası yayın).
-      </p>
+      <h2 className="text-lg font-semibold text-zinc-900">
+        {lang === "tr" ? "İçerik önerisi" : "Suggest content"}
+      </h2>
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block text-sm">
           <span className="mb-1 block font-medium text-zinc-700">
-            Takma ad (author_alias)
+            {lang === "tr" ? "Takma ad" : "Display name"}
           </span>
           <input
             name="author_alias"
@@ -72,7 +70,9 @@ export function ArticleSubmissionForm({ lang = "tr" }: FormProps) {
         </label>
       </div>
       <label className="block text-sm">
-        <span className="mb-1 block font-medium text-zinc-700">Başlık</span>
+        <span className="mb-1 block font-medium text-zinc-700">
+          {lang === "tr" ? "Başlık" : "Title"}
+        </span>
         <input
           name="title"
           required
@@ -81,7 +81,9 @@ export function ArticleSubmissionForm({ lang = "tr" }: FormProps) {
         />
       </label>
       <label className="block text-sm">
-        <span className="mb-1 block font-medium text-zinc-700">İçerik</span>
+        <span className="mb-1 block font-medium text-zinc-700">
+          {lang === "tr" ? "İçerik" : "Content"}
+        </span>
         <textarea
           name="content"
           required
@@ -92,7 +94,9 @@ export function ArticleSubmissionForm({ lang = "tr" }: FormProps) {
       </label>
       <label className="block text-sm">
         <span className="mb-1 block font-medium text-zinc-700">
-          Görsel URL (isteğe bağlı, image_url)
+          {lang === "tr"
+            ? "Görsel bağlantısı (isteğe bağlı)"
+            : "Image link (optional)"}
         </span>
         <input
           name="image_url"
@@ -111,7 +115,7 @@ export function ArticleSubmissionForm({ lang = "tr" }: FormProps) {
           {state.message}
         </p>
       ) : null}
-      <SubmitButton />
+      <SubmitButton lang={lang} />
     </form>
   );
 }

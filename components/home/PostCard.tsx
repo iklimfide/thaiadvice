@@ -115,26 +115,46 @@ export function PostCard({ lang, question }: Props) {
             </h2>
           </Link>
         </MasterEditable>
-        <MasterEditable
-          entity="question"
-          id={question.id}
-          field="author"
-          fieldType="text"
-          label="Yazar"
-          initialValue={question.author}
-          wrapClassName="mt-2"
-        >
-          <p className="text-xs text-zinc-500">
-            {lang === "tr" ? "Yazar:" : "by"}{" "}
-            <span className="text-zinc-700">{question.author}</span>
-            {dateStr ? (
-              <>
-                {" "}
-                | {dateStr}
-              </>
-            ) : null}
-          </p>
-        </MasterEditable>
+        <div className="mt-2 flex flex-wrap items-center gap-x-1 text-xs text-zinc-500">
+          <MasterEditable
+            entity="question"
+            id={question.id}
+            field="author"
+            fieldType="text"
+            label="Yazar"
+            initialValue={question.author}
+            wrapClassName="min-w-0"
+          >
+            <span>
+              {lang === "tr" ? "Yazar:" : "by"}{" "}
+              <span className="text-zinc-700">{question.author}</span>
+            </span>
+          </MasterEditable>
+          <MasterEditable
+            entity="question"
+            id={question.id}
+            field="created_at"
+            fieldType="datetime_local"
+            label="Yayın tarihi"
+            initialValue={question.created_at}
+            wrapClassName="min-w-0"
+          >
+            <span>
+              {dateStr ? (
+                <>
+                  <span aria-hidden className="text-zinc-400">
+                    |
+                  </span>{" "}
+                  <span className="text-zinc-600">{dateStr}</span>
+                </>
+              ) : (
+                <span className="text-zinc-400">
+                  {lang === "tr" ? "| (tarih yok)" : "| (no date)"}
+                </span>
+              )}
+            </span>
+          </MasterEditable>
+        </div>
         <MasterEditable
           entity="question"
           id={question.id}

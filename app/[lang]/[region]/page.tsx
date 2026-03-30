@@ -13,16 +13,22 @@ import {
 } from "@/lib/data/queries";
 import { displayRegionTitle } from "@/lib/format/display-names";
 import { pageMetadata } from "@/lib/metadata/site";
+import { resolveRouteArg } from "@/lib/next/resolve-route-args";
 import { localizedPathAlternates } from "@/lib/seo/language-paths";
 
 export const dynamic = "force-dynamic";
 
 type Props = {
-  params: Promise<{ lang: string; region: string }>;
+  params:
+    | Promise<{ lang: string; region: string }>
+    | { lang: string; region: string };
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { lang, region: regionSlug } = await params;
+  const p = await resolveRouteArg(params);
+  if (!p || typeof p.lang !== "string" || typeof p.region !== "string")
+    notFound();
+  const { lang, region: regionSlug } = p;
   const region = await getRegionBySlug(regionSlug);
   if (!region) return { title: "Bulunamadı" };
   const hasImage = Boolean(region.image?.trim());
@@ -38,7 +44,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function RegionPage({ params }: Props) {
-  const { lang, region: regionSlug } = await params;
+  const p = await resolveRouteArg(params);
+  if (!p || typeof p.lang !== "string" || typeof p.region !== "string")
+    notFound();
+  const { lang, region: regionSlug } = p;
   const region = await getRegionBySlug(regionSlug);
   if (!region) notFound();
 

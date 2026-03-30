@@ -21,6 +21,7 @@ const QUESTION_FIELDS = new Set([
   "media_seo_text",
   "category",
   "region",
+  "created_at",
 ]);
 
 const PLACE_FIELDS = new Set([
@@ -119,6 +120,15 @@ export async function masterUpdateQuestionField(
       if ("error" in ing) return { ok: false, message: ing.error };
       value = ing.publicUrl;
     }
+  }
+
+  if (field === "created_at") {
+    const raw = String(formData.get("value") ?? "").trim();
+    const d = new Date(raw);
+    if (!raw || Number.isNaN(d.getTime())) {
+      return { ok: false, message: "Geçersiz tarih." };
+    }
+    value = d.toISOString();
   }
 
   const { error } = await db

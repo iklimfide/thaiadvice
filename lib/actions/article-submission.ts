@@ -1,7 +1,7 @@
 "use server";
 
 import { isKnownQuestionCategorySlug } from "@/lib/data/question-categories";
-import { getSupabase } from "@/lib/supabase/server";
+import { getSupabaseOrNull } from "@/lib/supabase/server";
 import { getSupabaseServiceRole } from "@/lib/supabase/service";
 
 export type FormState = { ok: boolean; message?: string };
@@ -31,7 +31,15 @@ export async function submitArticleSuggestion(
   const db =
     process.env.SUPABASE_SERVICE_ROLE_KEY?.trim().length
       ? getSupabaseServiceRole()
-      : getSupabase();
+      : getSupabaseOrNull();
+
+  if (!db) {
+    return {
+      ok: false,
+      message:
+        "Sunucu yapılandırması eksik (Supabase ortam değişkenleri).",
+    };
+  }
 
   const { error } = await db.from("article_submissions").insert({
     title,

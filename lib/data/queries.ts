@@ -1,6 +1,5 @@
 import { cache } from "react";
-import { getSupabase } from "@/lib/supabase/server";
-import { isSupabasePublicConfigured } from "@/lib/supabase/env";
+import { getSupabaseOrNull } from "@/lib/supabase/server";
 import {
   categoryKeysForUrlResolution,
   normalizeQuestionCategorySlug,
@@ -69,10 +68,11 @@ export type RegionsFromSupabase = {
 
 export const loadRegionsFromSupabase = cache(
   async (): Promise<RegionsFromSupabase> => {
-    if (!isSupabasePublicConfigured()) {
+    const sb = getSupabaseOrNull();
+    if (!sb) {
       return { regions: [], error: null };
     }
-    const { data, error } = await getSupabase()
+    const { data, error } = await sb
       .from("regions")
       .select("*")
       .order("slug", { ascending: true });
@@ -95,7 +95,9 @@ export async function listRegions(): Promise<RegionRow[]> {
 export async function getRegionBySlug(
   slug: string
 ): Promise<RegionRow | null> {
-  const { data, error } = await getSupabase()
+  const sb = getSupabaseOrNull();
+  if (!sb) return null;
+  const { data, error } = await sb
     .from("regions")
     .select("*")
     .eq("slug", slug)
@@ -110,7 +112,9 @@ export async function getRegionBySlug(
 export async function listSubRegionsForRegion(
   regionId: string
 ): Promise<SubRegionRow[]> {
-  const { data, error } = await getSupabase()
+  const sb = getSupabaseOrNull();
+  if (!sb) return [];
+  const { data, error } = await sb
     .from("sub_regions")
     .select("*")
     .eq("region_id", regionId)
@@ -126,7 +130,9 @@ export async function getSubRegionBySlug(
   regionId: string,
   slug: string
 ): Promise<SubRegionRow | null> {
-  const { data, error } = await getSupabase()
+  const sb = getSupabaseOrNull();
+  if (!sb) return null;
+  const { data, error } = await sb
     .from("sub_regions")
     .select("*")
     .eq("region_id", regionId)
@@ -142,7 +148,9 @@ export async function getSubRegionBySlug(
 export async function listPlacesForSubRegion(
   subRegionId: string
 ): Promise<PlaceRow[]> {
-  const { data, error } = await getSupabase()
+  const sb = getSupabaseOrNull();
+  if (!sb) return [];
+  const { data, error } = await sb
     .from("places")
     .select("*")
     .eq("sub_region_id", subRegionId)
@@ -158,7 +166,9 @@ export async function getPlaceBySlug(
   subRegionId: string,
   slug: string
 ): Promise<PlaceRow | null> {
-  const { data, error } = await getSupabase()
+  const sb = getSupabaseOrNull();
+  if (!sb) return null;
+  const { data, error } = await sb
     .from("places")
     .select("*")
     .eq("sub_region_id", subRegionId)
@@ -182,7 +192,9 @@ export async function getQuestionByPath(
   articleSlug: string,
   includeHidden = false
 ): Promise<QuestionRow | null> {
-  let q = getSupabase()
+  const sb = getSupabaseOrNull();
+  if (!sb) return null;
+  let q = sb
     .from("questions")
     .select("*")
     .eq("lang", lang)
@@ -252,7 +264,9 @@ export async function resolveArticleDetail(
     }
   }
 
-  let slugQuery = getSupabase()
+  const sbSlug = getSupabaseOrNull();
+  if (!sbSlug) return null;
+  let slugQuery = sbSlug
     .from("questions")
     .select("*")
     .eq("lang", lang)
@@ -303,7 +317,9 @@ export async function listQuestionAlternatesForUrl(
   const rKeys = uniqueRegionKeys(regionSegment, regionRow);
   const cKeys = categoryKeysForUrlResolution(categorySegment);
 
-  const { data, error } = await getSupabase()
+  const sbAlt = getSupabaseOrNull();
+  if (!sbAlt) return [];
+  const { data, error } = await sbAlt
     .from("questions")
     .select("*")
     .eq("slug", slug);
@@ -331,7 +347,9 @@ export async function listQuestionsForLang(
   lang: string,
   options?: { includeHidden?: boolean }
 ): Promise<QuestionRow[]> {
-  let q = getSupabase()
+  const sb = getSupabaseOrNull();
+  if (!sb) return [];
+  let q = sb
     .from("questions")
     .select("*")
     .eq("lang", lang)
@@ -372,7 +390,9 @@ export async function listRelatedQuestionsForArticle(
   const rKeys = uniqueRegionKeys(urlRegionSegment, regionRow);
   const catCanon = normalizeQuestionCategorySlug(currentCategory);
 
-  const { data, error } = await getSupabase()
+  const sbRel = getSupabaseOrNull();
+  if (!sbRel) return [];
+  const { data, error } = await sbRel
     .from("questions")
     .select("*")
     .eq("lang", lang)
@@ -435,8 +455,9 @@ export type NavQuestionCategory = { slug: string; label: string };
 /** Header menüsü: kanonik sıra, yalnızca içerik olan slug’lar */
 export const loadNavQuestionCategories = cache(
   async (lang: string): Promise<NavQuestionCategory[]> => {
-    if (!isSupabasePublicConfigured()) return [];
-    const { data, error } = await getSupabase()
+    const sb = getSupabaseOrNull();
+    if (!sb) return [];
+    const { data, error } = await sb
       .from("questions")
       .select("category")
       .eq("lang", lang)
@@ -478,7 +499,9 @@ export async function listFaqByCategory(
   const c = category.trim();
   if (!c) return [];
 
-  const { data, error } = await getSupabase()
+  const sbFaq = getSupabaseOrNull();
+  if (!sbFaq) return [];
+  const { data, error } = await sbFaq
     .from("faq_entries")
     .select("*")
     .eq("category", c)
@@ -499,7 +522,9 @@ export async function listFaqItemsByCategory(
   const c = category.trim();
   if (!c) return [];
 
-  const { data, error } = await getSupabase()
+  const sbItems = getSupabaseOrNull();
+  if (!sbItems) return [];
+  const { data, error } = await sbItems
     .from("faq_items")
     .select("*")
     .eq("category", c)

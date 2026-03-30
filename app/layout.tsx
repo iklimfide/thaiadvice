@@ -3,6 +3,14 @@ import { DM_Sans, Merriweather } from "next/font/google";
 import { getPublicSiteUrl } from "@/lib/metadata/site";
 import "./globals.css";
 
+function rootMetadataBase(): URL {
+  try {
+    return new URL(getPublicSiteUrl());
+  } catch {
+    return new URL("http://localhost:3000");
+  }
+}
+
 const dmSans = DM_Sans({
   subsets: ["latin", "latin-ext"],
   variable: "--font-dm-sans",
@@ -17,7 +25,7 @@ const merriweather = Merriweather({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(getPublicSiteUrl()),
+  metadataBase: rootMetadataBase(),
   title: {
     default: "ThaiAdvice.com",
     template: "%s | ThaiAdvice.com",

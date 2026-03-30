@@ -7,11 +7,15 @@ import {
 
 const defaultTitle = "ThaiAdvice.com — Tayland rehberi";
 
+/** Vercel Production’da NEXT_PUBLIC_SITE_URL yok / localhost ise sitemap ve metadata için */
+const PRODUCTION_CANONICAL_ORIGIN = "https://www.thaiadvice.com";
+
 /**
  * Canonical site origin for metadata and absolute links.
- * 1) NEXT_PUBLIC_SITE_URL — Vercel’de özel alan veya sabit üretim URL’si için Environment Variable
- * 2) VERCEL_URL — Vercel’in otomatik verdiği deployment adresi (https eklenir)
- * 3) Yerel geliştirme
+ * 1) NEXT_PUBLIC_SITE_URL — Vercel’de özel alan (Production’da localhost yazılı env yok sayılır)
+ * 2) Vercel Production — sabit üretim alanı (sitemap’in deployment alt alanında kalmaması için)
+ * 3) VERCEL_URL — önizleme veya diğer Vercel ortamları
+ * 4) Yerel: http://localhost:3000
  */
 function asValidOrigin(raw: string): string | null {
   const s = raw.trim().replace(/\/$/, "");
@@ -24,18 +28,37 @@ function asValidOrigin(raw: string): string | null {
   }
 }
 
+function isLocalhostOrigin(origin: string): boolean {
+  try {
+    const h = new URL(origin).hostname.toLowerCase();
+    return h === "localhost" || h === "127.0.0.1" || h === "[::1]";
+  } catch {
+    return false;
+  }
+}
+
 export function getPublicSiteUrl(): string {
+  const onVercel = process.env.VERCEL === "1";
+  const prodOnVercel =
+    onVercel && process.env.VERCEL_ENV === "production";
+
   const fromEnv = process.env.NEXT_PUBLIC_SITE_URL?.trim();
   if (fromEnv) {
     const ok = asValidOrigin(
       fromEnv.includes("://") ? fromEnv : `http://${fromEnv}`
     );
-    if (ok) return ok;
+    if (ok && !(onVercel && isLocalhostOrigin(ok))) return ok;
+  }
+
+  if (prodOnVercel) {
+    return PRODUCTION_CANONICAL_ORIGIN;
   }
 
   const vercel = process.env.VERCEL_URL?.trim();
   if (vercel) {
-    const ok = asValidOrigin(vercel.startsWith("http") ? vercel : `https://${vercel}`);
+    const ok = asValidOrigin(
+      vercel.startsWith("http") ? vercel : `https://${vercel}`
+    );
     if (ok) return ok;
   }
 

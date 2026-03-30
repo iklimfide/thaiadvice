@@ -11,6 +11,7 @@ import {
   categoryLabelForLang,
   categorySlugForUrl,
 } from "@/lib/data/question-categories";
+import { formatPostDate } from "@/lib/format/date";
 import { displayRegionTitle } from "@/lib/format/display-names";
 import { stripQuickAnswerPrefix } from "@/lib/format/faq-display";
 import { questionArticleJsonLd } from "@/lib/format/question-seo";
@@ -65,6 +66,7 @@ export function QuestionArticleContent({
   ];
 
   const hasImage = Boolean(question.image_url?.trim());
+  const publishedStr = formatPostDate(question.created_at, lang);
   const articleJsonLd = questionArticleJsonLd(question, pagePath);
   const shareUrl = `${siteOrigin.replace(/\/$/, "")}${pagePath.startsWith("/") ? pagePath : `/${pagePath}`}`;
 
@@ -121,6 +123,21 @@ export function QuestionArticleContent({
             initialValue={question.author}
           >
             <span>{question.author}</span>
+          </MasterEditable>
+          <span aria-hidden className="font-normal text-zinc-400">
+            ·
+          </span>
+          <MasterEditable
+            entity="question"
+            id={question.id}
+            field="created_at"
+            fieldType="datetime_local"
+            label="Yayın tarihi"
+            initialValue={question.created_at}
+          >
+            <span className="font-normal normal-case tracking-normal text-zinc-500">
+              {publishedStr || (lang === "tr" ? "Tarih yok" : "No date")}
+            </span>
           </MasterEditable>
         </div>
         <MasterEditable

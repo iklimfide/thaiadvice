@@ -18,17 +18,20 @@ import { sitePublicImagePathFromQuestionStorageUrl } from "@/lib/format/site-ima
 import { ogImageAltFromMediaSeo } from "@/lib/format/question-seo";
 import { getMasterUser } from "@/lib/admin/auth-server";
 import { absoluteUrl, getPublicSiteUrl, pageMetadata } from "@/lib/metadata/site";
+import { resolveRouteArg } from "@/lib/next/resolve-route-args";
 import { localizedPathAlternates } from "@/lib/seo/language-paths";
 
 export const dynamic = "force-dynamic";
 
+type SlugRouteParams = {
+  lang: string;
+  region: string;
+  sub_region: string;
+  slug: string;
+};
+
 type Props = {
-  params: Promise<{
-    lang: string;
-    region: string;
-    sub_region: string;
-    slug: string;
-  }>;
+  params: Promise<SlugRouteParams> | SlugRouteParams;
 };
 
 function metaDescriptionFromIntro(ai: string): string | null {
@@ -48,8 +51,19 @@ function virtualRegionFromQuestion(q: { region: string }): RegionRow {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { lang, region: regionSlug, sub_region: subSlug, slug } =
-    await params;
+  const raw = await resolveRouteArg(params);
+  if (!raw) notFound();
+  const lang = raw.lang;
+  const regionSlug = raw.region;
+  const subSlug = raw.sub_region;
+  const slug = raw.slug;
+  if (
+    typeof lang !== "string" ||
+    typeof regionSlug !== "string" ||
+    typeof subSlug !== "string" ||
+    typeof slug !== "string"
+  )
+    notFound();
 
   const master = await getMasterUser();
   const resolved = await resolveArticleDetail(
@@ -124,8 +138,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
  * 2) places — regions + sub_regions gerekir
  */
 export default async function RegionCategorySlugPage({ params }: Props) {
-  const { lang, region: regionSlug, sub_region: subSlug, slug } =
-    await params;
+  const raw = await resolveRouteArg(params);
+  if (!raw) notFound();
+  const lang = raw.lang;
+  const regionSlug = raw.region;
+  const subSlug = raw.sub_region;
+  const slug = raw.slug;
+  if (
+    typeof lang !== "string" ||
+    typeof regionSlug !== "string" ||
+    typeof subSlug !== "string" ||
+    typeof slug !== "string"
+  )
+    notFound();
 
   const master = await getMasterUser();
   const resolved = await resolveArticleDetail(

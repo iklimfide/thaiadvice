@@ -70,7 +70,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const url = `${base}${path.startsWith("/") ? path : `/${path}`}`;
     if (seen.has(url)) return;
     seen.add(url);
-    const { changeFrequency = "weekly", priority = 0.7 } = opts ?? {};
+    const { changeFrequency = "daily", priority = 0.7 } = opts ?? {};
     out.push({
       url,
       lastModified: now,
@@ -111,7 +111,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       pushEntry(
         `/${lang}/${region.slug}`,
         relPathsForRest(region.slug),
-        { changeFrequency: "weekly", priority: 0.85 }
+        { changeFrequency: "daily", priority: 0.85 }
       );
     }
     const subs = await listSubRegionsForRegion(region.id);
@@ -119,7 +119,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       const rest = `${region.slug}/${sub.slug}`;
       for (const lang of SITE_LANGS) {
         pushEntry(`/${lang}/${rest}`, relPathsForRest(rest), {
-          changeFrequency: "weekly",
+          changeFrequency: "daily",
           priority: 0.8,
         });
       }
@@ -163,7 +163,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     out.push({
       url,
       lastModified: now,
-      changeFrequency: "weekly",
+      changeFrequency: "daily",
       priority: 0.75,
       alternates: languageAlternates(base, relByLang),
     });

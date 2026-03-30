@@ -18,7 +18,9 @@ import {
   type ModerationState,
 } from "@/lib/actions/moderation";
 import { useParams, usePathname } from "next/navigation";
-import { useActionState, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { useFormState } from "react-dom";
+import { isoToDatetimeLocalValue } from "@/lib/format/date";
 import { useMaster } from "./MasterContext";
 
 type FieldType =
@@ -27,7 +29,8 @@ type FieldType =
   | "image"
   | "related_slugs"
   | "select_price"
-  | "rating";
+  | "rating"
+  | "datetime_local";
 
 type Props = {
   entity: "question" | "place" | "region" | "sub_region";
@@ -75,60 +78,60 @@ export function MasterEditable({
     storageSlug?.trim() || routeSlug || id.replace(/-/g, "").slice(0, 12);
   const [open, setOpen] = useState(false);
 
-  const [qState, qAction] = useActionState(
+  const [qState, qAction] = useFormState(
     masterUpdateQuestionField,
     initialInline
   );
-  const [relState, relAction] = useActionState(
+  const [relState, relAction] = useFormState(
     masterUpdateQuestionRelatedSlugs,
     initialInline
   );
-  const [pState, pAction] = useActionState(
+  const [pState, pAction] = useFormState(
     masterUpdatePlaceField,
     initialInline
   );
-  const [rState, rAction] = useActionState(
+  const [rState, rAction] = useFormState(
     masterUpdateRegionField,
     initialInline
   );
-  const [regionUrlState, regionUrlAction] = useActionState(
+  const [regionUrlState, regionUrlAction] = useFormState(
     masterUpdateRegionField,
     initialInline
   );
 
-  const [imgUrlState, imgUrlAction] = useActionState(
+  const [imgUrlState, imgUrlAction] = useFormState(
     setQuestionImageUrl,
     initialMod
   );
-  const [imgUpState, imgUpAction] = useActionState(
+  const [imgUpState, imgUpAction] = useFormState(
     uploadQuestionImage,
     initialMod
   );
-  const [placeUrlState, placeUrlAction] = useActionState(
+  const [placeUrlState, placeUrlAction] = useFormState(
     masterUpdatePlaceField,
     initialInline
   );
-  const [placeUpState, placeUpAction] = useActionState(
+  const [placeUpState, placeUpAction] = useFormState(
     masterUploadPlaceImage,
     initialInline
   );
-  const [regionUpState, regionUpAction] = useActionState(
+  const [regionUpState, regionUpAction] = useFormState(
     masterUploadRegionImage,
     initialInline
   );
-  const [srState, srAction] = useActionState(
+  const [srState, srAction] = useFormState(
     masterUpdateSubRegionField,
     initialInline
   );
-  const [subRegionUrlState, subRegionUrlAction] = useActionState(
+  const [subRegionUrlState, subRegionUrlAction] = useFormState(
     masterUpdateSubRegionField,
     initialInline
   );
-  const [subRegionUpState, subRegionUpAction] = useActionState(
+  const [subRegionUpState, subRegionUpAction] = useFormState(
     masterUploadSubRegionImage,
     initialInline
   );
-  const [visState, visAction] = useActionState(
+  const [visState, visAction] = useFormState(
     masterSetQuestionHidden,
     initialInline
   );
@@ -551,6 +554,63 @@ export function MasterEditable({
                     }
                   >
                     {pState.message}
+                  </p>
+                ) : null}
+              </form>
+            ) : null}
+
+            {fieldType === "datetime_local" && entity === "question" ? (
+              <form
+                action={qAction}
+                className="mt-4 space-y-3"
+                onSubmit={(e) => {
+                  const form = e.currentTarget;
+                  const local = form.elements.namedItem(
+                    "datetime_local"
+                  ) as HTMLInputElement | null;
+                  if (!local?.value) {
+                    e.preventDefault();
+                    return;
+                  }
+                  const d = new Date(local.value);
+                  if (Number.isNaN(d.getTime())) {
+                    e.preventDefault();
+                    return;
+                  }
+                  const hidden = form.elements.namedItem(
+                    "value"
+                  ) as HTMLInputElement | null;
+                  if (hidden) hidden.value = d.toISOString();
+                }}
+              >
+                <input type="hidden" name="id" value={id} />
+                <input type="hidden" name="field" value={field} />
+                <input type="hidden" name="pathname" value={pathname} />
+                <input type="hidden" name="lang" value={lang} />
+                <input type="hidden" name="value" defaultValue="" />
+                <label className="block text-sm font-medium text-zinc-700">
+                  Tarih ve saat (tarayıcı saat diliminiz)
+                </label>
+                <input
+                  name="datetime_local"
+                  type="datetime-local"
+                  defaultValue={isoToDatetimeLocalValue(initialValue)}
+                  step={60}
+                  className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
+                />
+                <button
+                  type="submit"
+                  className="rounded-md bg-zinc-900 px-3 py-1.5 text-sm text-white"
+                >
+                  Kaydet
+                </button>
+                {qState.message ? (
+                  <p
+                    className={
+                      qState.ok ? "text-sm text-emerald-700" : "text-sm text-red-600"
+                    }
+                  >
+                    {qState.message}
                   </p>
                 ) : null}
               </form>

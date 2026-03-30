@@ -33,6 +33,13 @@ export function LoginForm() {
 
   return (
     <form onSubmit={onSubmit} className="mt-6 space-y-4">
+      {searchParams.get("error") === "config" ? (
+        <p className="text-sm text-red-600">
+          Sunucuda Supabase ortam değişkenleri eksik (
+          <code className="rounded bg-zinc-100 px-1">NEXT_PUBLIC_SUPABASE_URL</code> ve
+          anon anahtar). Vercel proje ayarlarından ekleyin.
+        </p>
+      ) : null}
       {searchParams.get("error") === "forbidden" ? (
         <p className="text-sm text-red-600">
           Bu hesap moderasyon yetkisine sahip değil (MASTER_EMAILS).

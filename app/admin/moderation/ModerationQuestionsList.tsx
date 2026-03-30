@@ -6,7 +6,7 @@ import {
   uploadQuestionImage,
   type ModerationState,
 } from "@/lib/actions/moderation";
-import { useActionState } from "react";
+import { useFormState } from "react-dom";
 
 export type QuestionImageRow = {
   id: string;
@@ -51,8 +51,8 @@ export function ModerationQuestionsList({
 }
 
 function QuestionRow({ question: q }: { question: QuestionImageRow }) {
-  const [urlState, urlAction] = useActionState(setQuestionImageUrl, initial);
-  const [upState, upAction] = useActionState(uploadQuestionImage, initial);
+  const [urlState, urlAction] = useFormState(setQuestionImageUrl, initial);
+  const [upState, upAction] = useFormState(uploadQuestionImage, initial);
 
   return (
     <div className="space-y-4">

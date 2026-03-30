@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { ArticleSubmissionForm } from "@/components/forms/ArticleSubmissionForm";
 import { PostCard } from "@/components/home/PostCard";
 import { HomeQuestionSearch } from "@/components/home/HomeQuestionSearch";
@@ -16,18 +17,23 @@ import {
 import { getMasterUser } from "@/lib/admin/auth-server";
 import { SiteJsonLd } from "@/components/seo/SiteJsonLd";
 import { pageMetadata } from "@/lib/metadata/site";
+import { resolveRouteArg } from "@/lib/next/resolve-route-args";
 import { SITE_LANGS } from "@/lib/seo/site-languages";
 
 export const dynamic = "force-dynamic";
 
 type Props = {
-  params: Promise<{ lang: string }>;
-  searchParams: Promise<{ category?: string | string[]; q?: string | string[] }>;
+  params: Promise<{ lang: string }> | { lang: string };
+  searchParams?:
+    | Promise<{ category?: string | string[]; q?: string | string[] }>
+    | { category?: string | string[]; q?: string | string[] };
 };
 
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
-  const { lang } = await params;
-  const sp = await searchParams;
+  const p = await resolveRouteArg(params);
+  if (!p || typeof p.lang !== "string") notFound();
+  const { lang } = p;
+  const sp = (await Promise.resolve(searchParams)) ?? {};
   const raw = sp.category;
   const cat =
     typeof raw === "string"
@@ -63,8 +69,10 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
 }
 
 export default async function LangHome({ params, searchParams }: Props) {
-  const { lang } = await params;
-  const sp = await searchParams;
+  const p = await resolveRouteArg(params);
+  if (!p || typeof p.lang !== "string") notFound();
+  const { lang } = p;
+  const sp = (await Promise.resolve(searchParams)) ?? {};
   const rawCat = sp.category;
   const categoryFilter =
     typeof rawCat === "string"

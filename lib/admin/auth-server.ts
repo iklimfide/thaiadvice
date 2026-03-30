@@ -6,6 +6,7 @@ import { createServerSupabaseForAuth } from "@/lib/supabase/cookie-server";
 
 export async function getMasterUser() {
   const supabase = await createServerSupabaseForAuth();
+  if (!supabase) return null;
   const {
     data: { user },
     error,
@@ -16,6 +17,9 @@ export async function getMasterUser() {
 
 export async function assertMasterOrRedirect() {
   const supabase = await createServerSupabaseForAuth();
+  if (!supabase) {
+    redirect("/admin/login?error=config");
+  }
   const {
     data: { user },
   } = await supabase.auth.getUser();
