@@ -185,6 +185,16 @@ export default async function RegionCategorySlugPage({ params }: Props) {
         ? `/${lang}/${resolved.regionRow.slug}`
         : `/${lang}#regions`;
 
+    let hasEnglishTranslation = false;
+    if (lang === "tr" && master) {
+      const alternates = await listQuestionAlternatesForUrl(
+        regionSlug,
+        subSlug,
+        slug
+      );
+      hasEnglishTranslation = alternates.some((row) => row.lang === "en");
+    }
+
     return (
       <QuestionArticleContent
         lang={lang}
@@ -196,6 +206,7 @@ export default async function RegionCategorySlugPage({ params }: Props) {
         faq={faq}
         relatedQuestions={relatedQuestions}
         siteOrigin={siteOrigin}
+        hasEnglishTranslation={hasEnglishTranslation}
       />
     );
   }

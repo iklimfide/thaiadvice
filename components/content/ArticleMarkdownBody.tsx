@@ -34,11 +34,13 @@ const markdownComponents: Components = {
   h1: ({ node: _node, ...props }) => <h2 {...props} />,
   h2: ({ node: _node, children, className, ...props }) => {
     const label = textFromNodes(children);
-    const perlamare = /perlamare/i.test(label);
+    const expertTip =
+      /perlamare/i.test(label) ||
+      /arif\s*g[uü]ven[cç]/i.test(label);
     return (
       <h3
         {...props}
-        className={[className, perlamare ? "article-perlamare-heading" : ""]
+        className={[className, expertTip ? "article-expert-tip-heading" : ""]
           .filter(Boolean)
           .join(" ")}
       >
@@ -50,13 +52,22 @@ const markdownComponents: Components = {
   h4: ({ node: _node, ...props }) => <h4 {...props} />,
   h5: ({ node: _node, ...props }) => <h4 {...props} />,
   h6: ({ node: _node, ...props }) => <h4 {...props} />,
-  a: ({ node: _node, href, children, ...props }) => {
+  a: ({ node: _node, href, children, className, ...props }) => {
     const external =
       typeof href === "string" &&
       (href.startsWith("http:") || href.startsWith("https:"));
+    const linkClass = [
+      "article-detail-link",
+      "font-medium text-blue-600 visited:text-blue-600 hover:text-blue-700",
+      "underline decoration-blue-500/80 underline-offset-[3px] hover:decoration-blue-600",
+      className,
+    ]
+      .filter(Boolean)
+      .join(" ");
     return (
       <a
         href={href}
+        className={linkClass}
         {...props}
         {...(external
           ? { rel: "noopener noreferrer", target: "_blank" }

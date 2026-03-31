@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS public.questions (
   title text NOT NULL,
   content text NOT NULL,
   excerpt text,
-  author text NOT NULL DEFAULT 'Perlamare'::text,
+  author text NOT NULL DEFAULT 'Arif GÜVENÇ'::text,
   related_slugs text[] NOT NULL DEFAULT '{}'::text[],
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   updated_at timestamp with time zone NOT NULL DEFAULT now(),

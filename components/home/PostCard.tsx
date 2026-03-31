@@ -24,17 +24,66 @@ export function PostCard({ lang, question }: Props) {
   const href = `/${lang}/${question.region}/${catSeg}/${question.slug}`;
   const categoryDisplay = categoryLabelForLang(question.category, lang);
   const dateStr = formatPostDate(question.created_at, lang);
+  const updatedStr = formatPostDate(question.updated_at, lang);
+  const createdMs = new Date(question.created_at).getTime();
+  const updatedMs = new Date(question.updated_at).getTime();
+  const showUpdatedAt =
+    Number.isFinite(createdMs) &&
+    Number.isFinite(updatedMs) &&
+    updatedMs > createdMs &&
+    Boolean(updatedStr) &&
+    updatedStr !== dateStr;
   const hasImage = Boolean(question.image_url?.trim());
   const isHidden = question.is_hidden;
+  const tr = lang === "tr";
+
+  const shellClass = isHidden
+    ? "rounded-[2rem] border border-violet-200/90 bg-violet-50/95 p-5 shadow-sm"
+    : "rounded-[2rem] border border-slate-100 bg-white p-5 shadow-sm";
 
   return (
-    <article
-      className={`flex h-full flex-col overflow-hidden rounded-lg border shadow-sm transition hover:shadow-md ${
-        isHidden
-          ? "border-violet-200/80 bg-violet-50/95 hover:border-violet-300/90"
-          : "border-zinc-200 bg-white hover:border-brand/30"
-      }`}
-    >
+    <article className={`${shellClass} overflow-hidden transition hover:shadow-md`}>
+      {isHidden ? (
+        <p
+          className="mb-4 rounded-xl bg-violet-200/70 px-3 py-2 text-center text-[10px] font-bold uppercase tracking-wide text-violet-950"
+          role="status"
+        >
+          {tr ? "Gizli — ziyaretçilere kapalı" : "Hidden — not public"}
+        </p>
+      ) : null}
+
+      <MasterEditable
+        entity="question"
+        id={question.id}
+        field="category"
+        fieldType="text"
+        label="Kategori (veritabanı)"
+        initialValue={question.category}
+        wrapClassName="mb-4 min-w-0"
+      >
+        <span className="block text-[10px] font-bold uppercase tracking-widest text-category">
+          {categoryDisplay}
+        </span>
+      </MasterEditable>
+
+      <MasterEditable
+        entity="question"
+        id={question.id}
+        field="title"
+        fieldType="text"
+        label="Başlık"
+        initialValue={question.title}
+        wrapClassName="mb-16"
+        showQuestionVisibilityToggle
+        questionIsHidden={question.is_hidden}
+      >
+        <Link href={href}>
+          <h2 className="font-sans text-xl font-extrabold leading-tight tracking-tight text-slate-900 transition hover:text-brand">
+            {question.title}
+          </h2>
+        </Link>
+      </MasterEditable>
+
       <MasterEditable
         entity="question"
         id={question.id}
@@ -44,12 +93,12 @@ export function PostCard({ lang, question }: Props) {
         initialValue={question.image_url ?? ""}
         storageSlug={question.slug}
         hasMedia={hasImage}
-        wrapClassName={isHidden ? "bg-violet-100/35" : ""}
+        wrapClassName={`mb-8 ${isHidden ? "bg-violet-100/30" : ""}`}
       >
         <Link
           href={href}
-          className={`relative block aspect-[16/10] w-full ${
-            isHidden ? "bg-violet-100/50" : "bg-zinc-100"
+          className={`relative block aspect-video w-full overflow-hidden rounded-2xl shadow-inner ${
+            isHidden ? "bg-violet-100/50" : "bg-slate-100"
           }`}
         >
           {hasImage ? (
@@ -59,128 +108,122 @@ export function PostCard({ lang, question }: Props) {
               className="object-cover"
               sizes="(max-width:768px) 100vw, (max-width:1200px) 50vw, 33vw"
               fallback={
-                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-brand/20 to-category/20">
-                  <span className="font-serif text-2xl font-bold text-brand/40">
+                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-brand/15 to-category/15">
+                  <span className="font-sans text-2xl font-extrabold text-brand/35">
                     {(categoryDisplay || "?").slice(0, 1).toUpperCase()}
                   </span>
                 </div>
               }
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-brand/20 to-category/20">
-              <span className="font-serif text-2xl font-bold text-brand/40">
+            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-brand/15 to-category/15">
+              <span className="font-sans text-2xl font-extrabold text-brand/35">
                 {(categoryDisplay || "?").slice(0, 1).toUpperCase()}
               </span>
             </div>
           )}
         </Link>
       </MasterEditable>
-      <div className="flex flex-1 flex-col p-4 sm:p-5">
-        {isHidden ? (
-          <p
-            className="mb-3 rounded-md bg-violet-200/70 px-2.5 py-1.5 text-center text-[11px] font-bold uppercase tracking-wide text-violet-950"
-            role="status"
-          >
-            {lang === "tr" ? "Gizli — ziyaretçilere kapalı" : "Hidden — not public"}
-          </p>
-        ) : null}
-        <div className="text-center">
-          <MasterEditable
-            entity="question"
-            id={question.id}
-            field="category"
-            fieldType="text"
-            label="Kategori (veritabanı)"
-            initialValue={question.category}
-          >
-            <p className="text-xs font-semibold uppercase tracking-wider text-category">
-              {categoryDisplay}
-            </p>
-          </MasterEditable>
-        </div>
+
+      <div className="mb-4 flex flex-col gap-2">
         <MasterEditable
           entity="question"
           id={question.id}
-          field="title"
+          field="author"
           fieldType="text"
-          label="Başlık"
-          initialValue={question.title}
-          wrapClassName="mt-2"
-          showQuestionVisibilityToggle
-          questionIsHidden={question.is_hidden}
+          label="Yazar"
+          initialValue={question.author}
+          wrapClassName="min-w-0"
         >
-          <Link href={href}>
-            <h2 className="font-serif text-lg font-bold leading-snug text-zinc-900 transition hover:text-brand sm:text-xl">
-              {question.title}
-            </h2>
-          </Link>
+          <p className="font-sans leading-snug">
+            <span className="mr-2 text-xs font-bold uppercase tracking-wide text-slate-500">
+              {tr ? "Yazar" : "By"}
+            </span>
+            <span className="text-lg font-extrabold tracking-tight text-brand">
+              {question.author}
+            </span>
+          </p>
         </MasterEditable>
-        <div className="mt-2 flex flex-wrap items-center gap-x-1 text-xs text-zinc-500">
-          <MasterEditable
-            entity="question"
-            id={question.id}
-            field="author"
-            fieldType="text"
-            label="Yazar"
-            initialValue={question.author}
-            wrapClassName="min-w-0"
-          >
-            <span>
-              {lang === "tr" ? "Yazar:" : "by"}{" "}
-              <span className="text-zinc-700">{question.author}</span>
-            </span>
-          </MasterEditable>
-          <MasterEditable
-            entity="question"
-            id={question.id}
-            field="created_at"
-            fieldType="datetime_local"
-            label="Yayın tarihi"
-            initialValue={question.created_at}
-            wrapClassName="min-w-0"
-          >
-            <span>
-              {dateStr ? (
-                <>
-                  <span aria-hidden className="text-zinc-400">
-                    |
-                  </span>{" "}
-                  <span className="text-zinc-600">{dateStr}</span>
-                </>
-              ) : (
-                <span className="text-zinc-400">
-                  {lang === "tr" ? "| (tarih yok)" : "| (no date)"}
-                </span>
-              )}
-            </span>
-          </MasterEditable>
-        </div>
-        <MasterEditable
-          entity="question"
-          id={question.id}
-          field="excerpt"
-          fieldType="textarea"
-          label="Özet (kartta özet yoksa tam metin önizlemesi gösterilir)"
-          initialValue={question.excerpt ?? ""}
-          wrapClassName="mt-3 flex-1"
-        >
-          {question.excerpt?.trim() ? (
-            <p className="line-clamp-3 text-sm leading-relaxed text-zinc-600">
-              {stripQuickAnswerPrefix(question.excerpt)}
-            </p>
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-medium text-slate-500">
+          <span className="text-slate-400">{tr ? "Yayın:" : "Published:"}</span>
+          {dateStr ? (
+            <MasterEditable
+              entity="question"
+              id={question.id}
+              field="created_at"
+              fieldType="datetime_local"
+              label="Yayın tarihi"
+              initialValue={question.created_at}
+              wrapClassName="min-w-0"
+            >
+              <span>{dateStr}</span>
+            </MasterEditable>
           ) : (
-            <p className="line-clamp-3 text-sm leading-relaxed text-zinc-600">
-              {stripLeadingQuickAnswerBlockFromMarkdown(question.content)}
-            </p>
+            <MasterEditable
+              entity="question"
+              id={question.id}
+              field="created_at"
+              fieldType="datetime_local"
+              label="Yayın tarihi"
+              initialValue={question.created_at}
+              wrapClassName="min-w-0"
+            >
+              <span className="text-slate-300">
+                {tr ? "(tarih yok)" : "(no date)"}
+              </span>
+            </MasterEditable>
           )}
-        </MasterEditable>
-        <Link
-          href={href}
-          className="mt-3 inline-block text-sm font-semibold text-brand hover:underline"
-        >
-          {lang === "tr" ? "Devamını oku →" : "Read more →"}
-        </Link>
+          {showUpdatedAt && updatedStr ? (
+            <>
+              <span aria-hidden className="text-slate-300">
+                •
+              </span>
+              <span className="text-slate-400">
+                {tr ? "Güncelleme:" : "Updated:"}
+              </span>
+              <span>{updatedStr}</span>
+            </>
+          ) : null}
+        </div>
       </div>
+
+      <MasterEditable
+        entity="question"
+        id={question.id}
+        field="excerpt"
+        fieldType="textarea"
+        label="Özet (kartta özet yoksa tam metin önizlemesi gösterilir)"
+        initialValue={question.excerpt ?? ""}
+        wrapClassName="mb-4"
+      >
+        {question.excerpt?.trim() ? (
+          <p className="line-clamp-3 text-sm leading-relaxed text-slate-600">
+            {stripQuickAnswerPrefix(question.excerpt)}
+          </p>
+        ) : (
+          <p className="line-clamp-3 text-sm leading-relaxed text-slate-600">
+            {stripLeadingQuickAnswerBlockFromMarkdown(question.content)}
+          </p>
+        )}
+      </MasterEditable>
+
+      <Link
+        href={href}
+        className="group/link inline-flex items-center text-sm font-bold text-brand hover:gap-2"
+      >
+        {tr ? "Devamını oku" : "Read more"}
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2.5}
+          className="ml-2 h-3 w-3 transition-transform group-hover/link:translate-x-0.5"
+          aria-hidden
+        >
+          <path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </Link>
     </article>
   );
 }

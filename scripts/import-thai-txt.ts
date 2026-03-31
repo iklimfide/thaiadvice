@@ -25,6 +25,10 @@ import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { normalizeSupabaseProjectUrl } from "../lib/supabase/net";
 import { normalizeQuestionCategorySlug } from "../lib/data/question-categories";
+import {
+  logImportArticlePageUrl,
+  resolveImportArticleLang,
+} from "./import-thai-lang-meta";
 
 /** Next.js .env.local yüklemeden tsx çalışınca değişkenler boş kalır */
 function loadEnvFiles() {
@@ -111,6 +115,11 @@ const PLAIN_META_KEYS = new Set([
   "SLUG",
   "AUTHOR",
   "IMAGE_URL",
+  "LANG",
+  "LANGUAGE",
+  "LANGUAGE_CODE",
+  "DIL",
+  "DIL_KODU",
 ]);
 
 function extractPlainFrontmatter(s: string): { fm: string; body: string } | null {
@@ -324,14 +333,16 @@ async function main() {
     const { fm, body } = docs[i];
     const meta = parseFrontmatter(fm);
     try {
-      const parsed = parseArticleBody(body, { slugFromMeta: meta.SLUG });
+      const parsedBody = parseArticleBody(body, { slugFromMeta: meta.SLUG });
+      const lang = resolveImportArticleLang(meta, parsedBody.lang);
+      const parsed = { ...parsedBody, lang };
       const rawCat = meta.CATEGORY_ID || meta.CATEGORY || "";
       const category =
         normalizeQuestionCategorySlug(rawCat) ?? rawCat.trim();
       if (!category) throw new Error("CATEGORY_ID boş.");
 
       const region = (meta.REGION || "tayland").trim();
-      const author = (meta.AUTHOR || "Perlamare").trim();
+      const author = (meta.AUTHOR || "Arif GÜVENÇ").trim();
       const imageUrl = resolveImageUrl(meta.IMAGE_URL);
       let id: string | null = null;
       if (meta.ID && UUID_RE.test(meta.ID.trim())) id = meta.ID.trim();
@@ -358,7 +369,8 @@ async function main() {
         console.error(`[${i + 1}] Hata (${parsed.slug}):`, error.message);
         fail++;
       } else {
-        console.log(`[${i + 1}] Tamam: ${parsed.slug} (${category})`);
+        console.log(`[${i + 1}] Tamam: ${parsed.slug} (${category}, ${parsed.lang})`);
+        logImportArticlePageUrl(parsed.lang, region, category, parsed.slug);
         ok++;
       }
     } catch (e) {

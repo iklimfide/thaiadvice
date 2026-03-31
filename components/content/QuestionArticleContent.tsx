@@ -1,5 +1,6 @@
 import { Fragment } from "react";
 import { MasterEditable } from "@/components/admin/MasterEditable";
+import { MasterTranslateBar } from "@/components/admin/MasterTranslateBar";
 import { ArticleShareFooter } from "@/components/content/ArticleShareFooter";
 import { ArticleMarkdownBody } from "@/components/content/ArticleMarkdownBody";
 import { RelatedArticlesBelowDetail } from "@/components/content/RelatedBelowDetail";
@@ -32,6 +33,8 @@ type Props = {
   faq: FaqEntryRow[];
   relatedQuestions?: QuestionRow[];
   siteOrigin: string;
+  /** Master çeviri: aynı slug için lang=en satırı var mı (tekrar çeviri uyarısı) */
+  hasEnglishTranslation?: boolean;
 };
 
 export function QuestionArticleContent({
@@ -44,6 +47,7 @@ export function QuestionArticleContent({
   faq,
   relatedQuestions = [],
   siteOrigin,
+  hasEnglishTranslation = false,
 }: Props) {
   const home = lang === "tr" ? "Ana sayfa" : "Home";
   const categoryLabel = matchingSubRegion
@@ -83,6 +87,12 @@ export function QuestionArticleContent({
         }}
       />
       <Breadcrumbs items={crumbs} pagePath={pagePath} />
+      <MasterTranslateBar
+        questionId={question.id}
+        lang={lang}
+        pathname={pagePath}
+        hasEnglishTranslation={hasEnglishTranslation}
+      />
       {question.is_hidden ? (
         <div
           role="status"

@@ -4,11 +4,14 @@ import { MasterAddSubRegion } from "@/components/admin/MasterAddSubRegion";
 import { SubRegionCard } from "@/components/cards/SubRegionCard";
 import { RegionPageMasterHeader } from "@/components/content/RegionPageMasterHeader";
 import { FaqSection } from "@/components/faq/FaqSection";
+import { PostCard } from "@/components/home/PostCard";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { SectionTitle } from "@/components/ui/SectionTitle";
+import { getMasterUser } from "@/lib/admin/auth-server";
 import {
   getRegionBySlug,
   listFaqByCategory,
+  listQuestionsForLang,
   listSubRegionsForRegion,
 } from "@/lib/data/queries";
 import { displayRegionTitle } from "@/lib/format/display-names";
@@ -51,9 +54,14 @@ export default async function RegionPage({ params }: Props) {
   const region = await getRegionBySlug(regionSlug);
   if (!region) notFound();
 
-  const [subs, faq] = await Promise.all([
+  const master = await getMasterUser();
+  const [subs, faq, regionQuestions] = await Promise.all([
     listSubRegionsForRegion(region.id),
     listFaqByCategory(region.slug),
+    listQuestionsForLang(lang, {
+      includeHidden: Boolean(master),
+      regionSlug: region.slug,
+    }),
   ]);
 
   const home = lang === "tr" ? "Ana sayfa" : "Home";
@@ -65,6 +73,12 @@ export default async function RegionPage({ params }: Props) {
 
   const subsTitle = lang === "tr" ? "Alt bölgeler" : "Sub-regions";
   const emptySubs = lang === "tr" ? "Kayıt yok." : "No entries.";
+  const questionsTitle =
+    lang === "tr" ? "Bu bölgeye ait içerikler" : "Content for this destination";
+  const emptyQuestions =
+    lang === "tr"
+      ? "Bu bölge için henüz soru / makale yok."
+      : "No posts for this destination yet.";
 
   return (
     <div>
@@ -73,6 +87,24 @@ export default async function RegionPage({ params }: Props) {
         pagePath={`/${lang}/${regionSlug}`}
       />
       <RegionPageMasterHeader lang={lang} region={region} />
+
+      <section className="mb-10" aria-labelledby="region-questions-heading">
+        <h2 id="region-questions-heading" className="sr-only">
+          {questionsTitle}
+        </h2>
+        <SectionTitle className="mb-4">{questionsTitle}</SectionTitle>
+        {regionQuestions.length === 0 ? (
+          <p className="text-center text-sm text-zinc-500">{emptyQuestions}</p>
+        ) : (
+          <ul className="mx-auto grid w-full max-w-xl grid-cols-1 gap-8 md:max-w-none md:grid-cols-2 md:gap-8 xl:grid-cols-3">
+            {regionQuestions.map((q) => (
+              <li key={q.id} className="min-w-0">
+                <PostCard lang={lang} question={q} />
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       <section className="mb-10">
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">

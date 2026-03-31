@@ -345,7 +345,7 @@ export async function listQuestionAlternatesForUrl(
 
 export async function listQuestionsForLang(
   lang: string,
-  options?: { includeHidden?: boolean }
+  options?: { includeHidden?: boolean; regionSlug?: string }
 ): Promise<QuestionRow[]> {
   const sb = getSupabaseOrNull();
   if (!sb) return [];
@@ -355,6 +355,8 @@ export async function listQuestionsForLang(
     .eq("lang", lang)
     .order("created_at", { ascending: false });
   if (!options?.includeHidden) q = q.eq("is_hidden", false);
+  const regionSlug = options?.regionSlug?.trim();
+  if (regionSlug) q = q.eq("region", regionSlug);
   const { data, error } = await q;
   if (error) {
     logSupabase("listQuestionsForLang", error);

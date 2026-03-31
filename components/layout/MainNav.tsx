@@ -2,7 +2,7 @@
 
 import { SafeImage } from "@/components/ui/SafeImage";
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type { NavQuestionCategory } from "@/lib/data/queries";
 import { normalizeQuestionCategorySlug } from "@/lib/data/question-categories";
@@ -21,6 +21,7 @@ type Props = {
 
 export function MainNav({ lang, regions, navQuestionCategories }: Props) {
   const pathname = usePathname();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [destOpen, setDestOpen] = useState(false);
@@ -35,6 +36,10 @@ export function MainNav({ lang, regions, navQuestionCategories }: Props) {
 
   const isHome =
     pathname === `/${lang}` || pathname === `/${lang}/`;
+
+  const pathSegments = pathname.split("/").filter(Boolean);
+  const isArticleDetail =
+    pathSegments.length >= 4 && pathSegments[0] === lang;
 
   useEffect(() => {
     function close(e: MouseEvent) {
@@ -72,6 +77,16 @@ export function MainNav({ lang, regions, navQuestionCategories }: Props) {
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3">
         <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
+          {isArticleDetail ? (
+            <button
+              type="button"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-white/35 text-white hover:bg-white/10"
+              onClick={() => router.back()}
+              aria-label={t("Geri", "Back")}
+            >
+              <BackChevronIcon />
+            </button>
+          ) : null}
           <button
             type="button"
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-white/35 text-white hover:bg-white/10 lg:hidden"
@@ -297,6 +312,23 @@ export function MainNav({ lang, regions, navQuestionCategories }: Props) {
         </>
       ) : null}
     </header>
+  );
+}
+
+function BackChevronIcon() {
+  return (
+    <svg
+      width="22"
+      height="22"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M15 18l-6-6 6-6" />
+    </svg>
   );
 }
 

@@ -22,6 +22,10 @@ import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { normalizeSupabaseProjectUrl } from "../lib/supabase/net";
 import { normalizeQuestionCategorySlug } from "../lib/data/question-categories";
+import {
+  logImportArticlePageUrl,
+  resolveImportArticleLang,
+} from "./import-thai-lang-meta";
 
 function loadEnvFiles() {
   for (const name of [".env", ".env.local"]) {
@@ -188,7 +192,7 @@ function buildMarkdownContent(body: string, expert?: string): string {
   const main = stripCites(body).trim();
   const chunks: string[] = [main];
   if (expert?.trim()) {
-    chunks.push("\n\n## Perlamare görüşü\n\n" + stripCites(expert).trim());
+    chunks.push("\n\n## Arif GÜVENÇ tavsiyesi\n\n" + stripCites(expert).trim());
   }
   return chunks.join("").trim();
 }
@@ -228,12 +232,15 @@ export async function runThaiExportImport(
   const category =
     (normalizeQuestionCategorySlug(rawCat) ?? rawCat.trim()) || "yasam";
   const region = (meta.REGION || "tayland").trim();
-  const author = (meta.AUTHOR || "Perlamare").trim();
+  const author = (meta.AUTHOR || "Arif GÜVENÇ").trim();
   const imageUrl = resolveImageUrl(meta.IMAGE_URL);
   let id: string | null = null;
   if (meta.ID && UUID_RE.test(meta.ID.trim())) id = meta.ID.trim();
 
-  const lang = primaryLangFromHreflang(meta.HREFLANG);
+  const lang = resolveImportArticleLang(
+    meta,
+    primaryLangFromHreflang(meta.HREFLANG)
+  );
   const title = (meta.TITLE || "").trim() || titleFromSlug(slug);
   const excerpt = sec.snippet ? stripCites(sec.snippet).trim() : null;
   const bodyPart = sec.body?.trim();
@@ -276,7 +283,7 @@ export async function runThaiExportImport(
 
     if (Object.keys(patch).length === 0) {
       console.error(
-        "Bu slug için kayıt var ama dosyada güncellenecek alan yok (BODY, SNIPPET, Perlamare veya MEDYA boş)."
+        "Bu slug için kayıt var ama dosyada güncellenecek alan yok (BODY, SNIPPET, uzman tavsiyesi veya MEDYA boş)."
       );
       return 1;
     }
@@ -314,8 +321,9 @@ export async function runThaiExportImport(
     }
 
     console.log(
-      `Tamam (içerik/özet${mediaSeoWritten ? " + SEO medya" : ""}): ${slug} [id=${existing.id}, kategori=${existing.category}]`
+      `Tamam (içerik/özet${mediaSeoWritten ? " + SEO medya" : ""}): ${slug} [id=${existing.id}, kategori=${existing.category}, lang=${lang}]`
     );
+    logImportArticlePageUrl(lang, region, existing.category, slug);
     return 0;
   }
 
@@ -361,6 +369,7 @@ export async function runThaiExportImport(
   }
 
   console.log(`Tamam (yeni/ tam satır): ${slug} (${category}, ${lang})`);
+  logImportArticlePageUrl(lang, region, category, slug);
   return 0;
 }
 

@@ -135,76 +135,80 @@ export default async function LangHome({ params, searchParams }: Props) {
         : "Latest posts";
 
   return (
-    <div className="space-y-12 sm:space-y-16">
+    <>
       <SiteJsonLd lang={lang} />
-      <section id="latest-posts" aria-labelledby="latest-posts-heading">
-        <h2 id="latest-posts-heading" className="sr-only">
-          {latestLabel}
-        </h2>
-
-        <HomeQuestionSearch
-          lang={lang}
-          initialQuery={searchQuery}
-          categoryValue={categoryHiddenValue}
-        />
-
-        {questions.length === 0 ? (
-          <p className="text-center text-sm text-zinc-500">
-            {unknownCategoryFilter
-              ? lang === "tr"
-                ? "Geçersiz kategori."
-                : "Invalid category."
-              : searchTrimmed.length > 0 && afterCategory.length > 0
-                ? lang === "tr"
-                  ? "Aramanızla eşleşen içerik yok."
-                  : "No posts match your search."
-              : categoryFilter.length > 0
-                ? lang === "tr"
-                  ? "Bu kategoride içerik yok."
-                  : "No posts in this category."
-                : lang === "tr"
-                  ? "Bu dil için henüz içerik yok."
-                  : "No posts for this language yet."}
-          </p>
-        ) : (
-          <ul className="grid grid-cols-1 gap-6 sm:gap-8 md:grid-cols-2 xl:grid-cols-3">
-            {questions.map((q) => (
-              <li key={q.id} className="min-w-0">
-                <PostCard lang={lang} question={q} />
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <section id="regions" aria-labelledby="regions-heading">
-        <RibbonHeading>
-          {lang === "tr" ? "Destinasyonlar" : "Destinations"}
-        </RibbonHeading>
-        <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
-          <h2 id="regions-heading" className="sr-only">
-            {lang === "tr" ? "Tayland bölgeleri" : "Thailand regions"}
+      <div className="space-y-12 sm:space-y-16">
+        <section id="latest-posts" aria-labelledby="latest-posts-heading">
+          <h2 id="latest-posts-heading" className="sr-only">
+            {latestLabel}
           </h2>
-          {regions.length > 0 && !regionsError ? (
-            <span className="text-xs font-medium uppercase tracking-wide text-zinc-500">
-              {regions.length}{" "}
-              {lang === "tr" ? "bölge" : "regions"}
-            </span>
-          ) : null}
-        </div>
-        <RegionsListing
-          lang={lang}
-          regions={regions}
-          loadError={regionsError}
-        />
-      </section>
 
-      <section id="oneri" className="pb-8">
-        <RibbonHeading>
-          {lang === "tr" ? "İçerik önerisi" : "Suggest content"}
-        </RibbonHeading>
-        <ArticleSubmissionForm lang={lang} />
-      </section>
-    </div>
+          <div className="mx-auto w-full max-w-xl">
+            <HomeQuestionSearch
+              lang={lang}
+              initialQuery={searchQuery}
+              categoryValue={categoryHiddenValue}
+            />
+          </div>
+
+          {questions.length === 0 ? (
+            <p className="text-center text-sm text-zinc-500">
+              {unknownCategoryFilter
+                ? lang === "tr"
+                  ? "Geçersiz kategori."
+                  : "Invalid category."
+                : searchTrimmed.length > 0 && afterCategory.length > 0
+                  ? lang === "tr"
+                    ? "Aramanızla eşleşen içerik yok."
+                    : "No posts match your search."
+                  : categoryFilter.length > 0
+                    ? lang === "tr"
+                      ? "Bu kategoride içerik yok."
+                      : "No posts in this category."
+                    : lang === "tr"
+                      ? "Bu dil için henüz içerik yok."
+                      : "No posts for this language yet."}
+            </p>
+          ) : (
+            <ul className="mx-auto grid w-full max-w-xl grid-cols-1 gap-8 md:max-w-none md:grid-cols-2 md:gap-8 xl:grid-cols-3">
+              {questions.map((q) => (
+                <li key={q.id} className="min-w-0">
+                  <PostCard lang={lang} question={q} />
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        <section id="regions" aria-labelledby="regions-heading">
+          <RibbonHeading>
+            {lang === "tr" ? "Destinasyonlar" : "Destinations"}
+          </RibbonHeading>
+          <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
+            <h2 id="regions-heading" className="sr-only">
+              {lang === "tr" ? "Tayland bölgeleri" : "Thailand regions"}
+            </h2>
+            {regions.length > 0 && !regionsError ? (
+              <span className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+                {regions.length}{" "}
+                {lang === "tr" ? "bölge" : "regions"}
+              </span>
+            ) : null}
+          </div>
+          <RegionsListing
+            lang={lang}
+            regions={regions}
+            loadError={regionsError}
+          />
+        </section>
+
+        <section id="oneri" className="pb-8">
+          <RibbonHeading>
+            {lang === "tr" ? "İçerik önerisi" : "Suggest content"}
+          </RibbonHeading>
+          <ArticleSubmissionForm lang={lang} />
+        </section>
+      </div>
+    </>
   );
 }

@@ -21,6 +21,7 @@ import { useParams, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useFormState } from "react-dom";
 import { isoToDatetimeLocalValue } from "@/lib/format/date";
+import { MasterContentTiptap } from "@/components/admin/MasterContentTiptap";
 import { useMaster } from "./MasterContext";
 
 type FieldType =
@@ -669,12 +670,16 @@ export function MasterEditable({
                   <input type="hidden" name="storage_slug" value={slugForStorage} />
                 ) : null}
                 {fieldType === "textarea" ? (
-                  <textarea
-                    name="value"
-                    rows={field === "content" ? 18 : 8}
-                    defaultValue={initialValue}
-                    className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
-                  />
+                  entity === "question" && field === "content" ? (
+                    <MasterContentTiptap initialMarkdown={initialValue} lang={lang} />
+                  ) : (
+                    <textarea
+                      name="value"
+                      rows={field === "content" ? 18 : 8}
+                      defaultValue={initialValue}
+                      className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
+                    />
+                  )
                 ) : (
                   <input
                     name="value"

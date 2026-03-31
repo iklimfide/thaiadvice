@@ -17,7 +17,7 @@ export function HomeQuestionSearch({
     <form
       method="get"
       action={`/${lang}`}
-      className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-stretch"
+      className="group relative mb-8 w-full"
       role="search"
     >
       {categoryValue ? (
@@ -32,16 +32,32 @@ export function HomeQuestionSearch({
         type="search"
         defaultValue={initialQuery}
         placeholder={
-          tr ? "Sorunun cevabını ara ve bul" : "Search and find your answer"
+          tr
+            ? "Tayland hakkında her şeyi sor… (Örn: ATM, Vize)"
+            : "Ask anything about Thailand… (e.g. ATM, Visa)"
         }
         enterKeyHint="search"
-        className="min-h-[44px] w-full flex-1 rounded-lg border border-zinc-300 bg-white px-4 py-2.5 text-zinc-900 shadow-sm placeholder:text-zinc-400 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/25"
+        className="w-full rounded-2xl border-2 border-transparent bg-white p-4 pr-12 text-sm text-slate-900 shadow-sm transition-all placeholder:text-slate-400 focus:border-brand focus:outline-none focus:ring-0"
       />
       <button
         type="submit"
-        className="min-h-[44px] shrink-0 rounded-lg bg-brand px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-dark"
+        className="absolute right-4 top-1/2 -translate-y-1/2 text-brand transition-transform hover:scale-110"
+        aria-label={tr ? "Ara" : "Search"}
       >
-        {tr ? "Ara" : "Search"}
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="h-5 w-5"
+          aria-hidden
+        >
+          <circle cx="11" cy="11" r="8" />
+          <path d="m21 21-4.3-4.3" />
+        </svg>
       </button>
     </form>
   );

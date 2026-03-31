@@ -70,18 +70,18 @@ body {
     filter: drop-shadow(0 1px 1px rgb(0 0 0 / 0.06));
   }
 
-  /* “Perlamare görüşü” — alkol rehberi vb. şablondaki vurgulu özet kutusu */
-  .article-detail-body h3.article-perlamare-heading {
+  /* “Arif GÜVENÇ tavsiyesi” / eski Perlamare görüşü — vurgulu uzman kutusu */
+  .article-detail-body h3.article-expert-tip-heading {
     @apply mt-12 border-b border-brand/20 pb-2 sm:mt-14;
   }
 
-  .article-detail-body h3.article-perlamare-heading::before {
+  .article-detail-body h3.article-expert-tip-heading::before {
     content: "💡";
     filter: none;
     @apply text-lg sm:text-xl;
   }
 
-  .article-detail-body h3.article-perlamare-heading + p {
+  .article-detail-body h3.article-expert-tip-heading + p {
     @apply mt-4 rounded-xl border border-brand/15 bg-gradient-to-br from-brand/[0.06] via-white to-violet-50/40 px-4 py-4 text-pretty text-justify text-base font-medium leading-relaxed text-zinc-800 sm:px-5 sm:py-5 sm:text-lg;
   }
 
@@ -177,8 +177,28 @@ body {
     @apply mt-1 h-4 w-4 shrink-0 rounded border-zinc-300 text-brand accent-brand;
   }
 
-  .article-detail-body a {
-    @apply font-medium text-brand underline decoration-brand/40 underline-offset-2 hover:decoration-brand;
+  /* Başlık/liste içinde üstten gelen text-zinc renk mirasını ezmek için renk doğrudan */
+  .article-detail-body a.article-detail-link,
+  .article-detail-body a.article-detail-link:visited {
+    color: #2563eb;
+  }
+  .article-detail-body a.article-detail-link:hover {
+    color: #1d4ed8;
+  }
+  .article-detail-body a.article-detail-link {
+    @apply font-medium underline decoration-blue-500/80 underline-offset-[3px];
+  }
+  .article-detail-body a.article-detail-link:hover {
+    @apply decoration-blue-600;
+  }
+  /* [**metin**](url) → strong içindeki renk üstteki text-zinc-900 ile maviyi bastırmasın */
+  .article-detail-body a.article-detail-link strong,
+  .article-detail-body a.article-detail-link:visited strong {
+    color: inherit;
+    @apply font-semibold;
+  }
+  .article-detail-body a.article-detail-link:hover strong {
+    color: inherit;
   }
 
   .article-detail-body strong {
@@ -216,5 +236,46 @@ body {
 
   .article-detail-body hr {
     @apply my-8 border-t border-zinc-200;
+  }
+
+  /* Master Tiptap — sınıf editör kökünde (ProseMirror) */
+  .master-tiptap-editor {
+    @apply min-h-[260px] outline-none;
+  }
+  .master-tiptap-editor p {
+    @apply my-2 leading-relaxed;
+  }
+  .master-tiptap-editor h1 {
+    @apply mb-3 mt-4 font-serif text-xl font-bold text-zinc-900;
+  }
+  .master-tiptap-editor h2 {
+    @apply mb-2 mt-5 font-serif text-lg font-bold text-zinc-900;
+  }
+  .master-tiptap-editor h3 {
+    @apply mb-2 mt-4 font-serif text-base font-bold text-zinc-900;
+  }
+  .master-tiptap-editor h4 {
+    @apply mb-1 mt-3 font-serif text-sm font-bold text-zinc-900;
+  }
+  .master-tiptap-editor ul {
+    @apply my-2 list-disc pl-6;
+  }
+  .master-tiptap-editor ol {
+    @apply my-2 list-decimal pl-6;
+  }
+  .master-tiptap-editor a {
+    @apply text-brand underline underline-offset-2;
+  }
+  .master-tiptap-editor blockquote {
+    @apply my-3 border-l-4 border-brand/25 pl-3 italic text-zinc-600;
+  }
+  .master-tiptap-editor pre {
+    @apply my-3 overflow-x-auto rounded-md bg-zinc-900 p-3 text-xs text-zinc-100;
+  }
+  .master-tiptap-editor code {
+    @apply rounded bg-zinc-100 px-1 py-0.5 font-mono text-[0.85em] text-zinc-800;
+  }
+  .master-tiptap-editor pre code {
+    @apply bg-transparent p-0 text-zinc-100;
   }
 }
