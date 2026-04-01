@@ -10,8 +10,9 @@
  * Kullanım:
  *   npx tsx scripts/import-thai-txt.ts [dosya-yolu]
  *
- * Dosya `## 1. HEADER (META DATA)` (Perlamare export) ise bu betik otomatik olarak
- * `import-thai-export-txt.ts` çalıştırır; ayrıca `import:thai-export` gerekmez.
+ * Şu biçimler doğrudan `import-thai-export-txt` akışına yönlendirilir:
+ * — `## 1. HEADER (META DATA)` + `---` (klasik export)
+ * — `---` YAML + `## 1. SNIPPET` / `## 2. BODY` / uzman / `## 4. GÖRSEL` (Word şablonu)
  *
  * Varsayılan dosya: kullanıcı Downloads yolu (yoksa ./thai.txt denenir)
  *
@@ -25,6 +26,7 @@ import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { normalizeSupabaseProjectUrl } from "../lib/supabase/net";
 import { normalizeQuestionCategorySlug } from "../lib/data/question-categories";
+import { replacePerlamareWithArifGuvenc } from "../lib/format/replace-perlamare-in-text";
 import {
   logImportArticlePageUrl,
   resolveImportArticleLang,
@@ -309,11 +311,15 @@ async function main() {
   }
 
   const raw = readFileSync(filePath, "utf8");
-  if (isPerlamareExportFormat(raw)) {
-    console.log(
-      "Perlamare export biçimi algılandı (## 1. HEADER …) — import-thai-export akışı çalışıyor.\n"
-    );
-    const { runThaiExportImport } = await import("./import-thai-export-txt.js");
+
+  const { isYamlNumberedSectionExport, runThaiExportImport } = await import(
+    "./import-thai-export-txt.js"
+  );
+  if (isPerlamareExportFormat(raw) || isYamlNumberedSectionExport(raw)) {
+    const label = isPerlamareExportFormat(raw)
+      ? "## 1. HEADER (META DATA) + --- blokları"
+      : "YAML üst bilgi + ## 1. SNIPPET / BODY / uzman / GÖRSEL";
+    console.log(`${label} — import-thai-export akışı.\n`);
     const code = await runThaiExportImport(filePath);
     setTimeout(() => process.exit(code), 150);
     return;
@@ -352,9 +358,11 @@ async function main() {
         lang: parsed.lang,
         category,
         slug: parsed.slug,
-        title: parsed.title,
-        content: parsed.content,
-        excerpt: parsed.excerpt,
+        title: replacePerlamareWithArifGuvenc(parsed.title),
+        content: replacePerlamareWithArifGuvenc(parsed.content),
+        excerpt: parsed.excerpt
+          ? replacePerlamareWithArifGuvenc(parsed.excerpt)
+          : null,
         author,
         image_url: imageUrl,
         region,

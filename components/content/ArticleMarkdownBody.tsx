@@ -1,6 +1,7 @@
 import React, { isValidElement } from "react";
 import ReactMarkdown from "react-markdown";
 import type { Components } from "react-markdown";
+import { ExpandableImage } from "@/components/ui/ExpandableImage";
 import { normalizeArticleBodyMarkdown } from "@/lib/format/article-markdown-normalize";
 import { stripLeadingQuickAnswerBlockFromMarkdown } from "@/lib/format/faq-display";
 import rehypeSanitize from "rehype-sanitize";
@@ -34,9 +35,7 @@ const markdownComponents: Components = {
   h1: ({ node: _node, ...props }) => <h2 {...props} />,
   h2: ({ node: _node, children, className, ...props }) => {
     const label = textFromNodes(children);
-    const expertTip =
-      /perlamare/i.test(label) ||
-      /arif\s*g[uü]ven[cç]/i.test(label);
+    const expertTip = /arif\s*g[uü]ven[cç]/i.test(label);
     return (
       <h3
         {...props}
@@ -79,18 +78,21 @@ const markdownComponents: Components = {
   },
   img: ({ node: _node, src, alt, ...props }) => {
     if (!src || typeof src !== "string") return null;
+    const altText = alt ?? "";
     return (
       <span className="my-4 block text-center">
-        {/* Markdown görselleri keyfi URL; next/image domain kısıtı yok */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={src}
-          alt={alt ?? ""}
-          className="mx-auto max-h-[min(70vh,560px)] max-w-full rounded-lg border border-zinc-200 object-contain"
-          loading="lazy"
-          decoding="async"
-          {...props}
-        />
+        <ExpandableImage src={src} alt={altText}>
+          {/* Markdown görselleri keyfi URL; next/image domain kısıtı yok */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={src}
+            alt={altText}
+            className="mx-auto max-h-[min(70vh,560px)] max-w-full rounded-lg border border-zinc-200 object-contain transition group-hover:opacity-95"
+            loading="lazy"
+            decoding="async"
+            {...props}
+          />
+        </ExpandableImage>
       </span>
     );
   },

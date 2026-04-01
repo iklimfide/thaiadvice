@@ -3,7 +3,10 @@
 import { useRouter } from "next/navigation";
 import { useTransition, useState } from "react";
 import { useMaster } from "@/components/admin/MasterContext";
-import { translateQuestionToEnglish } from "@/lib/actions/translate-question";
+import {
+  repairEnglishInternalLinks,
+  translateQuestionToEnglish,
+} from "@/lib/actions/translate-question";
 
 type Props = {
   questionId: string;
@@ -48,31 +51,54 @@ export function MasterTranslateBar({
           {error}
         </p>
       ) : null}
-      <button
-        type="button"
-        disabled={pending}
-        className="rounded-lg bg-amber-800 px-3 py-2 text-xs font-bold uppercase tracking-wide text-white transition hover:bg-amber-900 disabled:opacity-50"
-        onClick={() => {
-          setError(null);
-          if (hasEnglishTranslation) {
-            const ok = window.confirm(
-              "Bu makale daha önce İngilizceye çevrilmiş. Tekrar çeviri yapmak, mevcut İngilizce sürümünü silip güncel Türkçe metinden yeniden oluşturur (EN’deki elle düzeltmeler gider). Devam etmek istiyor musunuz?"
-            );
-            if (!ok) return;
-          }
-          startTransition(async () => {
-            const r = await translateQuestionToEnglish(questionId, pathname);
-            if (r.ok && r.enPath) {
-              router.push(r.enPath);
-              router.refresh();
-            } else {
-              setError(r.message ?? "Bilinmeyen hata.");
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          disabled={pending}
+          className="rounded-lg bg-amber-800 px-3 py-2 text-xs font-bold uppercase tracking-wide text-white transition hover:bg-amber-900 disabled:opacity-50"
+          onClick={() => {
+            setError(null);
+            if (hasEnglishTranslation) {
+              const ok = window.confirm(
+                "Bu makale daha önce İngilizceye çevrilmiş. Tekrar çeviri yapmak, mevcut İngilizce sürümünü silip güncel Türkçe metinden yeniden oluşturur (EN’deki elle düzeltmeler gider). Devam etmek istiyor musunuz?"
+              );
+              if (!ok) return;
             }
-          });
-        }}
-      >
-        {pending ? "Çevriliyor…" : "İngilizceye çevir (AI)"}
-      </button>
+            startTransition(async () => {
+              const r = await translateQuestionToEnglish(questionId, pathname);
+              if (r.ok && r.enPath) {
+                router.push(r.enPath);
+                router.refresh();
+              } else {
+                setError(r.message ?? "Bilinmeyen hata.");
+              }
+            });
+          }}
+        >
+          {pending ? "Çevriliyor…" : "İngilizceye çevir (AI)"}
+        </button>
+        {hasEnglishTranslation ? (
+          <button
+            type="button"
+            disabled={pending}
+            className="rounded-lg border border-amber-700/50 bg-white/90 px-3 py-2 text-xs font-bold uppercase tracking-wide text-amber-950 transition hover:bg-white disabled:opacity-50"
+            title="OpenAI çağırmaz; yalnızca /tr/ iç linklerini /en/ yapar"
+            onClick={() => {
+              setError(null);
+              startTransition(async () => {
+                const r = await repairEnglishInternalLinks(questionId, pathname);
+                if (r.ok) {
+                  router.refresh();
+                } else {
+                  setError(r.message ?? "Bilinmeyen hata.");
+                }
+              });
+            }}
+          >
+            EN iç linklerini düzelt
+          </button>
+        ) : null}
+      </div>
     </div>
   );
 }

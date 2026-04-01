@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useState } from "react";
+import { ExpandableImage } from "@/components/ui/ExpandableImage";
 import {
   shouldUseSiteProxyWebpPath,
   sitePublicImagePathFromQuestionStorageUrl,
@@ -90,6 +91,8 @@ type SafeHeroBoxProps = {
   imageClassName?: string;
   sizes: string;
   priority?: boolean;
+  /** Kapak görseli için erişilebilir kısa açıklama (lightbox etiketi) */
+  alt?: string;
 };
 
 /** Kapak görseli: src yok veya kırık ise tüm kutu (layout dahil) render edilmez */
@@ -99,6 +102,7 @@ export function SafeHeroImageBox({
   imageClassName,
   sizes,
   priority,
+  alt = "",
 }: SafeHeroBoxProps) {
   const [broken, setBroken] = useState(false);
   const t = typeof src === "string" ? src.trim() : "";
@@ -111,16 +115,22 @@ export function SafeHeroImageBox({
 
   return (
     <div className={wrapperClassName}>
-      <Image
+      <ExpandableImage
         src={d}
-        alt=""
-        fill
-        className={imageClassName}
-        sizes={sizes}
-        priority={priority}
-        unoptimized={unoptimizedForSrc(d, t)}
-        onError={() => setBroken(true)}
-      />
+        alt={alt}
+        triggerClassName="absolute inset-0 block h-full w-full"
+      >
+        <Image
+          src={d}
+          alt={alt}
+          fill
+          className={imageClassName}
+          sizes={sizes}
+          priority={priority}
+          unoptimized={unoptimizedForSrc(d, t)}
+          onError={() => setBroken(true)}
+        />
+      </ExpandableImage>
     </div>
   );
 }

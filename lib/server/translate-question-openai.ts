@@ -1,5 +1,7 @@
-import "server-only";
-
+/**
+ * `server-only` yok: `scripts/translate-all-tr-to-en.ts` (tsx) doğrudan import eder.
+ * İstemci bundle’ına eklemeyin.
+ */
 import OpenAI from "openai";
 
 export type QuestionFieldsForTranslate = {
@@ -54,7 +56,8 @@ export async function translateQuestionFieldsTrToEn(
           "Respond with ONE JSON object only, keys: title (string), excerpt (string, use empty string if none), " +
           "content (string, GitHub-flavored Markdown), media_seo_text (string, empty if none). " +
           "Preserve Markdown structure (headings, lists, bold, links). " +
-          "Do not translate URL paths or slugs inside links; keep href targets exactly as in the source.",
+          "Do not translate URL paths or slugs inside links; keep internal paths exactly as in the source (e.g. /tr/region/...). " +
+          "The server rewrites /tr/ to /en/ for this site after translation.",
       },
       {
         role: "user",

@@ -37,6 +37,9 @@ export function MainNav({ lang, regions, navQuestionCategories }: Props) {
   const isHome =
     pathname === `/${lang}` || pathname === `/${lang}/`;
 
+  const corporateAboutPath = `/${lang}/genel/kurumsal/arif-guvenc-kimdir`;
+  const isCorporateAboutPage = pathname === corporateAboutPath;
+
   const pathSegments = pathname.split("/").filter(Boolean);
   const isArticleDetail =
     pathSegments.length >= 4 && pathSegments[0] === lang;
@@ -127,6 +130,12 @@ export function MainNav({ lang, regions, navQuestionCategories }: Props) {
         >
           <Link href={`/${lang}`} className={navLinkClass(isHome)}>
             {t("Ana sayfa", "Home")}
+          </Link>
+          <Link
+            href={corporateAboutPath}
+            className={navLinkClass(isCorporateAboutPage)}
+          >
+            {t("Arif GÜVENÇ kimdir", "About Arif GÜVENÇ")}
           </Link>
           <div className="relative" ref={destRef}>
             <button
@@ -256,6 +265,13 @@ export function MainNav({ lang, regions, navQuestionCategories }: Props) {
                 onClick={() => setMobileOpen(false)}
               >
                 {t("Ana sayfa", "Home")}
+              </Link>
+              <Link
+                href={corporateAboutPath}
+                className={`rounded-lg px-3 py-3 text-sm font-semibold hover:bg-violet-50 ${isCorporateAboutPage ? "text-brand" : "text-zinc-800"}`}
+                onClick={() => setMobileOpen(false)}
+              >
+                {t("Arif GÜVENÇ kimdir", "About Arif GÜVENÇ")}
               </Link>
               <p className="px-3 pt-2 text-xs font-bold uppercase text-zinc-500">
                 {t("Destinasyonlar", "Destinations")}

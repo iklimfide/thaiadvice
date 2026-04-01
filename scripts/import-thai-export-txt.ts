@@ -1,5 +1,7 @@
 /**
- * Perlamare export biçimi (## 1. HEADER …, [cite: N], --- ayraçları) → Supabase `questions`
+ * Export biçimleri:
+ * — `## 1. HEADER (META DATA)` + `---` blokları (klasik)
+ * — `---` YAML (TITLE, SLUG, …) + `## 1. SNIPPET` / `## 2. BODY` / uzman / GÖRSEL (Word şablonu)
  *
  * Kullanım:
  *   npx tsx scripts/import-thai-export-txt.ts [dosya-yolu]
@@ -22,6 +24,7 @@ import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { normalizeSupabaseProjectUrl } from "../lib/supabase/net";
 import { normalizeQuestionCategorySlug } from "../lib/data/question-categories";
+import { replacePerlamareWithArifGuvenc } from "../lib/format/replace-perlamare-in-text";
 import {
   logImportArticlePageUrl,
   resolveImportArticleLang,
@@ -83,11 +86,21 @@ function parseMetaBlock(headerBody: string): Record<string, string> {
 type SectionKey = "header" | "snippet" | "body" | "expert" | "media";
 
 function classifySectionHeading(line: string): SectionKey | null {
-  const u = line.toUpperCase();
+  const u = line.toLocaleUpperCase("tr-TR");
   if (u.includes("HEADER") && u.includes("META")) return "header";
   if (u.includes("SNIPPET") || u.includes("HIZLI CEVAP")) return "snippet";
   if (u.includes("BODY") || u.includes("ANA MAKALE")) return "body";
   if (u.includes("PERLAMARE") || u.includes("EXPERT INSIGHT")) return "expert";
+  if (
+    u.includes("ARIF") &&
+    (u.includes("GÜVENÇ") ||
+      u.includes("GUVENÇ") ||
+      u.includes("GÖRÜŞ") ||
+      u.includes("GORUS") ||
+      u.includes("TAVSİYE") ||
+      u.includes("TAVSIYE"))
+  )
+    return "expert";
   if (u.includes("GÖRSEL") || u.includes("GORSEL") || u.includes("MEDIA"))
     return "media";
   return null;
@@ -111,6 +124,86 @@ function parseExportSections(raw: string): Partial<Record<SectionKey, string>> {
     out[key] = m[2].trim();
   }
   return out;
+}
+
+/** Word çıktısı: `## ## 1.` → `### 1.` */
+function normalizeExportedBodyMarkdown(s: string): string {
+  let t = s.replace(/\r\n/g, "\n");
+  t = t.replace(/^##\s*##\s+/gm, "### ");
+  t = t.replace(/\n##\s*##\s+/g, "\n### ");
+  t = t.replace(/^##\s*###\s+/gm, "#### ");
+  t = t.replace(/\n##\s*###\s+/g, "\n#### ");
+  return t;
+}
+
+function fixLegacyCorporateLinks(s: string): string {
+  return s.replace(
+    /\/tr\/kurumsal\/biz-kimiz\b/g,
+    "/tr/genel/kurumsal/arif-guvenc-kimdir"
+  );
+}
+
+/** GÖRSEL bölümü: yıldızlı satırları düz SEO metnine çevir (okuyucuya gösterilmez) */
+function formatMediaSeoSection(s: string): string {
+  return s
+    .split(/\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => line.replace(/^\*\s+/, ""))
+    .join("\n")
+    .trim();
+}
+
+function parseSimpleYamlMeta(block: string): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const line of block.split(/\n/)) {
+    const m = line.match(/^([A-Za-z_][A-Za-z0-9_]*)\s*:\s*(.*)$/);
+    if (m) out[m[1].toUpperCase()] = m[2].trim();
+  }
+  return out;
+}
+
+/**
+ * `---` YAML + ardından `## 1. …` numaralı bölümler (içeride `---` ayraçları olsa bile güvenli).
+ * Klasik `### [DİL KODU]` makaleleri veya `## 1. HEADER` ile başlayanlar için null döner.
+ */
+function tryParseYamlFrontmatterAndNumberedSections(
+  raw: string
+): { meta: Record<string, string>; sections: Partial<Record<SectionKey, string>> } | null {
+  const text = raw.replace(/^\uFEFF/, "").replace(/\r\n/g, "\n");
+  const m = text.match(/^---\s*\n([\s\S]*?)\n---\s*\n([\s\S]*)$/);
+  if (!m) return null;
+  const rest0 = m[2].replace(/^\uFEFF/, "").trimStart();
+  if (/^###\s*\[\s*DİL\s*KODU/i.test(rest0)) return null;
+  if (/^##\s*1\.\s*HEADER\s*\(?\s*META\s*DATA/i.test(rest0)) return null;
+  if (!/^##\s*\d+\.\s/m.test(rest0)) return null;
+
+  const meta = parseSimpleYamlMeta(m[1]);
+  const lines = rest0.split("\n");
+  const chunks: { headingTitle: string; lines: string[] }[] = [];
+  let cur: { headingTitle: string; lines: string[] } | null = null;
+  for (const line of lines) {
+    const hm = line.match(/^##\s*\d+\.\s+(.+)$/);
+    if (hm) {
+      if (cur) chunks.push(cur);
+      cur = { headingTitle: hm[1].trim(), lines: [] };
+    } else if (cur) cur.lines.push(line);
+  }
+  if (cur) chunks.push(cur);
+
+  const sections: Partial<Record<SectionKey, string>> = {};
+  for (const ch of chunks) {
+    const key = classifySectionHeading(ch.headingTitle);
+    if (!key || key === "header") continue;
+    const body = ch.lines.join("\n").trim();
+    sections[key] = body;
+  }
+  return { meta, sections };
+}
+
+/** `import-thai-txt` önce bunu dener; true ise `runThaiExportImport` çağrılır */
+export function isYamlNumberedSectionExport(raw: string): boolean {
+  return tryParseYamlFrontmatterAndNumberedSections(raw) != null;
 }
 
 function primaryLangFromHreflang(h: string | undefined): string {
@@ -212,16 +305,25 @@ export async function runThaiExportImport(
   }
 
   const raw = readFileSync(filePath, "utf8");
-  const sec = parseExportSections(raw);
+  const yamlBundle = tryParseYamlFrontmatterAndNumberedSections(raw);
 
-  if (!sec.header) {
-    console.error(
-      "Export biçimi algılanmadı: '## 1. HEADER (META DATA)' bölümü yok."
-    );
-    return 1;
+  let meta: Record<string, string>;
+  let sec: Partial<Record<SectionKey, string>>;
+
+  if (yamlBundle) {
+    meta = yamlBundle.meta;
+    sec = yamlBundle.sections;
+  } else {
+    sec = parseExportSections(raw);
+    if (!sec.header) {
+      console.error(
+        "Export biçimi algılanmadı: YAML + numaralı bölümler (## 1. SNIPPET …) veya ## 1. HEADER (META DATA) gerekli."
+      );
+      return 1;
+    }
+    meta = parseMetaBlock(sec.header);
   }
 
-  const meta = parseMetaBlock(sec.header);
   const slug = (meta.SLUG || "").trim();
   if (!slug) {
     console.error("SLUG eksik.");
@@ -241,13 +343,33 @@ export async function runThaiExportImport(
     meta,
     primaryLangFromHreflang(meta.HREFLANG)
   );
-  const title = (meta.TITLE || "").trim() || titleFromSlug(slug);
-  const excerpt = sec.snippet ? stripCites(sec.snippet).trim() : null;
+  const title = replacePerlamareWithArifGuvenc(
+    (meta.TITLE || "").trim() || titleFromSlug(slug)
+  );
+  const excerpt = sec.snippet
+    ? replacePerlamareWithArifGuvenc(stripCites(sec.snippet).trim())
+    : meta.META_DESCRIPTION?.trim()
+      ? replacePerlamareWithArifGuvenc(meta.META_DESCRIPTION.trim())
+      : null;
   const bodyPart = sec.body?.trim();
-  const mediaSeoText = sec.media?.trim()
-    ? stripCites(sec.media).trim()
+  const normalizedBody = bodyPart
+    ? fixLegacyCorporateLinks(
+        normalizeExportedBodyMarkdown(stripCites(bodyPart))
+      )
+    : "";
+  const expertPart = sec.expert?.trim();
+  const normalizedExpert = expertPart
+    ? fixLegacyCorporateLinks(
+        normalizeExportedBodyMarkdown(stripCites(expertPart))
+      )
+    : undefined;
+  const mediaRaw = sec.media?.trim();
+  const mediaSeoText = mediaRaw
+    ? replacePerlamareWithArifGuvenc(formatMediaSeoSection(stripCites(mediaRaw)))
     : null;
-  const content = buildMarkdownContent(bodyPart ?? "", sec.expert);
+  const content = replacePerlamareWithArifGuvenc(
+    buildMarkdownContent(normalizedBody, normalizedExpert)
+  );
 
   const supabase = getClient();
 

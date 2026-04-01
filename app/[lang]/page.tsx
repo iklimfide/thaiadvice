@@ -14,6 +14,7 @@ import {
   categoryLabelForLang,
   normalizeQuestionCategorySlug,
 } from "@/lib/data/question-categories";
+import type { QuestionRow } from "@/lib/types/database";
 import { getMasterUser } from "@/lib/admin/auth-server";
 import { SiteJsonLd } from "@/components/seo/SiteJsonLd";
 import { pageMetadata } from "@/lib/metadata/site";
@@ -21,6 +22,18 @@ import { resolveRouteArg } from "@/lib/next/resolve-route-args";
 import { SITE_LANGS } from "@/lib/seo/site-languages";
 
 export const dynamic = "force-dynamic";
+
+/** Menüden erişilen kurumsal “kimdir” sayfası; yalnızca “tüm kategoriler” akışında gizlenir */
+function excludeCorporateAboutFromLatestGrid(questions: QuestionRow[]): QuestionRow[] {
+  return questions.filter((q) => {
+    const cat = normalizeQuestionCategorySlug(q.category);
+    const isHub =
+      q.slug === "arif-guvenc-kimdir" &&
+      q.region.trim().toLowerCase() === "genel" &&
+      cat === "kurumsal";
+    return !isHub;
+  });
+}
 
 type Props = {
   params: Promise<{ lang: string }> | { lang: string };
@@ -89,7 +102,7 @@ export default async function LangHome({ params, searchParams }: Props) {
         : "";
 
   const master = await getMasterUser();
-  const [{ regions, error: regionsError }, allQuestions] = await Promise.all([
+  const [{ regions, error: regionsError }, rawQuestions] = await Promise.all([
     loadRegionsFromSupabase(),
     listQuestionsForLang(lang, { includeHidden: Boolean(master) }),
   ]);
@@ -103,13 +116,18 @@ export default async function LangHome({ params, searchParams }: Props) {
   const afterCategory = unknownCategoryFilter
     ? []
     : filterCanon != null
-      ? allQuestions.filter(
+      ? rawQuestions.filter(
           (q) => normalizeQuestionCategorySlug(q.category) === filterCanon
         )
-      : allQuestions;
+      : rawQuestions;
+
+  const forListing =
+    filterCanon == null && !unknownCategoryFilter
+      ? excludeCorporateAboutFromLatestGrid(afterCategory)
+      : afterCategory;
 
   const questions = filterQuestionsByTextQuery(
-    afterCategory,
+    forListing,
     searchQuery,
     lang
   );

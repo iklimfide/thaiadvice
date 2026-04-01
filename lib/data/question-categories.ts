@@ -23,6 +23,7 @@ export const QUESTION_CATEGORY_DEFS: readonly QuestionCategoryDef[] = [
   },
   { slug: "saglik", labelTr: "Sağlık", labelEn: "Health" },
   { slug: "guvenlik", labelTr: "Güvenlik", labelEn: "Safety" },
+  { slug: "kurumsal", labelTr: "Kurumsal", labelEn: "About" },
 ] as const;
 
 const SLUG_SET = new Set(QUESTION_CATEGORY_DEFS.map((d) => d.slug));
@@ -48,6 +49,9 @@ const EXTRA_ALIASES: Record<string, string> = {
   "özel durumlar": "alisilmadik-durumlar",
   "ozel durumlar": "alisilmadik-durumlar",
   "special cases": "alisilmadik-durumlar",
+  kurumsal: "kurumsal",
+  corporate: "kurumsal",
+  about: "kurumsal",
 };
 
 function buildAliasToSlug(): Record<string, string> {

@@ -9,6 +9,8 @@
     "lint": "next lint",
     "import:thai": "npx tsx scripts/import-thai-txt.ts",
     "import:thai-export": "npx tsx scripts/import-thai-export-txt.ts",
+    "seed:about": "npx tsx scripts/seed-arif-guvenc-kimdir.ts",
+    "translate:all-tr-en": "npx tsx scripts/translate-all-tr-to-en.ts",
     "images:webp": "npx tsx scripts/convert-images-to-webp.ts"
   },
   "dependencies": {
@@ -27,6 +29,7 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-markdown": "^10.1.0",
+    "rehype-raw": "^7.0.0",
     "rehype-sanitize": "^6.0.0",
     "remark-breaks": "^4.0.0",
     "remark-gfm": "^4.0.1",

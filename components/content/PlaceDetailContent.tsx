@@ -129,6 +129,7 @@ export function PlaceDetailContent({
         {hasImage ? (
           <SafeHeroImageBox
             src={place.image}
+            alt={place.name}
             wrapperClassName="relative mb-6 aspect-[21/9] w-full overflow-hidden rounded-lg border border-zinc-200 bg-zinc-100 shadow-sm sm:mb-8 sm:rounded-xl"
             imageClassName="object-cover"
             sizes="(max-width:1152px) 100vw, 1152px"

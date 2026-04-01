@@ -209,6 +209,7 @@ export function QuestionArticleContent({
         {hasImage ? (
           <SafeHeroImageBox
             src={question.image_url}
+            alt={question.title}
             wrapperClassName="relative mb-6 aspect-[21/9] w-full max-w-3xl overflow-hidden rounded-lg border border-zinc-200 bg-zinc-100 shadow-sm sm:mb-8 sm:rounded-xl"
             imageClassName="object-cover"
             sizes="(max-width:768px) 100vw, 768px"

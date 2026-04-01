@@ -469,12 +469,14 @@ export const loadNavQuestionCategories = cache(
       return [];
     }
     const slugSet = new Set<string>();
+    /** Kurumsal tek sayfa; kategori filtresinde listelenmesin */
+    const excludeFromNav = new Set(["kurumsal"]);
     for (const row of data ?? []) {
       const raw = (row as { category?: string }).category;
       const c = typeof raw === "string" ? raw.trim() : "";
       if (!c) continue;
       const n = normalizeQuestionCategorySlug(c);
-      if (n) slugSet.add(n);
+      if (n && !excludeFromNav.has(n)) slugSet.add(n);
     }
     return QUESTION_CATEGORY_DEFS.filter((d) => slugSet.has(d.slug)).map(
       (d) => ({
