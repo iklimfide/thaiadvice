@@ -74,9 +74,9 @@ function sleep(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-async function fetchAllTurkishQuestions(
-  db: ReturnType<typeof createClient>
-): Promise<QuestionRow[]> {
+type QuestionDb = Parameters<typeof upsertEnglishFromTurkishQuestion>[0];
+
+async function fetchAllTurkishQuestions(db: QuestionDb): Promise<QuestionRow[]> {
   const pageSize = 500;
   const out: QuestionRow[] = [];
   let from = 0;
@@ -99,9 +99,7 @@ async function fetchAllTurkishQuestions(
   return out;
 }
 
-async function fetchExistingEnKeys(
-  db: ReturnType<typeof createClient>
-): Promise<Set<string>> {
+async function fetchExistingEnKeys(db: QuestionDb): Promise<Set<string>> {
   const pageSize = 500;
   const keys = new Set<string>();
   let from = 0;
