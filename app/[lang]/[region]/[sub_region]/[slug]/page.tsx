@@ -13,6 +13,10 @@ import {
   listRelatedQuestionsForArticle,
   resolveArticleDetail,
 } from "@/lib/data/queries";
+import {
+  isQuestionScheduledForPublish,
+  masterQuestionVisibility,
+} from "@/lib/data/question-visibility";
 import type { RegionRow } from "@/lib/types/database";
 import { sitePublicImagePathFromQuestionStorageUrl } from "@/lib/format/site-image-url";
 import { ogImageAltFromMediaSeo } from "@/lib/format/question-seo";
@@ -71,10 +75,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     regionSlug,
     subSlug,
     slug,
-    { includeHidden: Boolean(master) }
+    masterQuestionVisibility(master)
   );
   if (resolved) {
     const q = resolved.question;
+    const scheduledPreview =
+      Boolean(master) && isQuestionScheduledForPublish(q);
     const hasImg = Boolean(q.image_url?.trim());
     const shortImg = hasImg
       ? sitePublicImagePathFromQuestionStorageUrl(q.image_url)
@@ -108,6 +114,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       path: canonicalPath,
       locale: lang,
       languagePaths,
+      robots: scheduledPreview ? { index: false, follow: false } : undefined,
     });
   }
 
@@ -158,7 +165,7 @@ export default async function RegionCategorySlugPage({ params }: Props) {
     regionSlug,
     subSlug,
     slug,
-    { includeHidden: Boolean(master) }
+    masterQuestionVisibility(master)
   );
   if (resolved) {
     const displayRegion: RegionRow =
@@ -167,6 +174,8 @@ export default async function RegionCategorySlugPage({ params }: Props) {
       ? await getSubRegionBySlug(resolved.regionRow.id, subSlug)
       : null;
     const q = resolved.question;
+    const scheduledPreview =
+      Boolean(master) && isQuestionScheduledForPublish(q);
     const [faq, relatedQuestions] = await Promise.all([
       listFaqByCategory(q.slug),
       listRelatedQuestionsForArticle(
@@ -207,6 +216,7 @@ export default async function RegionCategorySlugPage({ params }: Props) {
         relatedQuestions={relatedQuestions}
         siteOrigin={siteOrigin}
         hasEnglishTranslation={hasEnglishTranslation}
+        scheduledPreview={scheduledPreview}
       />
     );
   }

@@ -9,9 +9,11 @@ SET updated_at = created_at
 WHERE updated_at IS DISTINCT FROM created_at;
 
 -- UPDATE sırasında updated_at otomatik
+-- SET search_path: Supabase linter (mutable search_path) / güvenlik
 CREATE OR REPLACE FUNCTION public.questions_set_updated_at()
 RETURNS TRIGGER
 LANGUAGE plpgsql
+SET search_path = public
 AS $$
 BEGIN
   NEW.updated_at := now();

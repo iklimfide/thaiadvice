@@ -14,6 +14,7 @@ import {
   listQuestionsForLang,
   listSubRegionsForRegion,
 } from "@/lib/data/queries";
+import { masterQuestionVisibility } from "@/lib/data/question-visibility";
 import { displayRegionTitle } from "@/lib/format/display-names";
 import { pageMetadata } from "@/lib/metadata/site";
 import { resolveRouteArg } from "@/lib/next/resolve-route-args";
@@ -59,7 +60,7 @@ export default async function RegionPage({ params }: Props) {
     listSubRegionsForRegion(region.id),
     listFaqByCategory(region.slug),
     listQuestionsForLang(lang, {
-      includeHidden: Boolean(master),
+      ...masterQuestionVisibility(master),
       regionSlug: region.slug,
     }),
   ]);

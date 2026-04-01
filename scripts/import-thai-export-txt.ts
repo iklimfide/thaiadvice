@@ -10,8 +10,11 @@
  *
  * Ortam: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY (önerilir)
  *
- * Aynı slug+lang+region için satır zaten varsa: yalnızca `content`, `excerpt` ve
- * (dosyada 5. bölüm varsa) `media_seo_text` güncellenir. Yoksa tam upsert.
+ * Aynı slug+lang+region için satır zaten varsa: yalnızca `content`, `excerpt`,
+ * (dosyada 5. bölüm varsa) `media_seo_text`, isteğe bağlı HEADER’daki
+ * `STATUS` / `PUBLISH_AT` / `YAYIN_TARIHI` (yayın zamanı) güncellenir. Yoksa tam upsert.
+ *
+ * Yayın zamanı örneği (Türkiye saati): `STATUS: 2026-04-02 09:00`
  *
  * `## 5. GÖRSEL (MEDIA)…` makale gövdesine eklenmez; yalnızca `media_seo_text`
  * sütununa yazılır (JSON-LD / og:image:alt ile botlar).
@@ -24,6 +27,10 @@ import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { normalizeSupabaseProjectUrl } from "../lib/supabase/net";
 import { normalizeQuestionCategorySlug } from "../lib/data/question-categories";
+import {
+  metaPublishAtRaw,
+  parseImportStatusPublishAt,
+} from "../lib/format/parse-import-status-publish-at";
 import { replacePerlamareWithArifGuvenc } from "../lib/format/replace-perlamare-in-text";
 import {
   logImportArticlePageUrl,
@@ -371,6 +378,18 @@ export async function runThaiExportImport(
     buildMarkdownContent(normalizedBody, normalizedExpert)
   );
 
+  const statusRaw = metaPublishAtRaw(meta);
+  let publishIso: string | null = null;
+  if (statusRaw) {
+    publishIso = parseImportStatusPublishAt(statusRaw);
+    if (!publishIso) {
+      console.error(
+        `STATUS / PUBLISH_AT anlaşılamadı: "${statusRaw}" (örn. 2026-04-02 09:00 veya ISO)`
+      );
+      return 1;
+    }
+  }
+
   const supabase = getClient();
 
   const { data: existingRows, error: fetchErr } = await supabase
@@ -395,11 +414,17 @@ export async function runThaiExportImport(
       excerpt?: string | null;
       media_seo_text?: string | null;
       title?: string;
+      created_at?: string;
+      updated_at?: string;
     } = {};
     if (content) patch.content = content;
     if (excerpt !== null) patch.excerpt = excerpt;
     if (mediaSeoText !== null) patch.media_seo_text = mediaSeoText;
     if (titleNeedsRepair(existing.title)) patch.title = title;
+    if (publishIso) {
+      patch.created_at = publishIso;
+      patch.updated_at = publishIso;
+    }
 
     let mediaSeoWritten = Boolean(mediaSeoText);
 
@@ -467,6 +492,7 @@ export async function runThaiExportImport(
     media_seo_text: mediaSeoText,
     region,
     related_slugs: [] as string[],
+    ...(publishIso ? { created_at: publishIso, updated_at: publishIso } : {}),
   };
 
   let { error: upErr } = await supabase.from("questions").upsert(row, {

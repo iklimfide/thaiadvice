@@ -35,11 +35,16 @@ export function PostCard({ lang, question }: Props) {
     updatedStr !== dateStr;
   const hasImage = Boolean(question.image_url?.trim());
   const isHidden = question.is_hidden;
+  const isScheduled =
+    Number.isFinite(createdMs) && createdMs > Date.now();
   const tr = lang === "tr";
 
-  const shellClass = isHidden
-    ? "rounded-[2rem] border border-violet-200/90 bg-violet-50/95 p-5 shadow-sm"
-    : "rounded-[2rem] border border-slate-100 bg-white p-5 shadow-sm";
+  const shellClass =
+    isHidden
+      ? "rounded-[2rem] border border-violet-200/90 bg-violet-50/95 p-5 shadow-sm"
+      : isScheduled
+        ? "rounded-[2rem] border border-amber-200/90 bg-amber-50/40 p-5 shadow-sm"
+        : "rounded-[2rem] border border-slate-100 bg-white p-5 shadow-sm";
 
   return (
     <article className={`${shellClass} overflow-hidden transition hover:shadow-md`}>
@@ -49,6 +54,16 @@ export function PostCard({ lang, question }: Props) {
           role="status"
         >
           {tr ? "Gizli — ziyaretçilere kapalı" : "Hidden — not public"}
+        </p>
+      ) : null}
+      {!isHidden && isScheduled ? (
+        <p
+          className="mb-4 rounded-xl bg-amber-200/70 px-3 py-2 text-center text-[10px] font-bold uppercase tracking-wide text-amber-950"
+          role="status"
+        >
+          {tr
+            ? "Zamanlandı — yayın tarihinde herkese açılır"
+            : "Scheduled — goes public on date shown"}
         </p>
       ) : null}
 

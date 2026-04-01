@@ -14,6 +14,10 @@ import {
   mapRegionRow,
   mapSubRegionRow,
 } from "@/lib/data/map-rows";
+import {
+  publishCutoffIso,
+  type QuestionVisibilityOpts,
+} from "@/lib/data/question-visibility";
 import type {
   FaqEntryRow,
   FaqItemRow,
@@ -190,10 +194,11 @@ export async function getQuestionByPath(
   regionKey: string,
   category: string,
   articleSlug: string,
-  includeHidden = false
+  visibility?: QuestionVisibilityOpts
 ): Promise<QuestionRow | null> {
   const sb = getSupabaseOrNull();
   if (!sb) return null;
+  const vis = visibility ?? {};
   let q = sb
     .from("questions")
     .select("*")
@@ -201,7 +206,8 @@ export async function getQuestionByPath(
     .eq("region", regionKey)
     .eq("category", category)
     .eq("slug", articleSlug);
-  if (!includeHidden) q = q.eq("is_hidden", false);
+  if (!vis.includeHidden) q = q.eq("is_hidden", false);
+  if (!vis.includeScheduled) q = q.lte("created_at", publishCutoffIso());
   const { data, error } = await q.maybeSingle();
   if (error) {
     logSupabase("getQuestionByPath", error);
@@ -247,19 +253,22 @@ export async function resolveArticleDetail(
   regionSegment: string,
   categorySegment: string,
   articleSlug: string,
-  options?: { includeHidden?: boolean }
+  options?: QuestionVisibilityOpts
 ): Promise<ResolvedArticleDetail | null> {
   const slug = articleSlug.trim();
   if (!slug) return null;
 
-  const includeHidden = Boolean(options?.includeHidden);
+  const vis: QuestionVisibilityOpts = {
+    includeHidden: Boolean(options?.includeHidden),
+    includeScheduled: Boolean(options?.includeScheduled),
+  };
   const regionRow = await getRegionBySlug(regionSegment);
   const rKeys = uniqueRegionKeys(regionSegment, regionRow);
   const cKeys = categoryKeysForUrlResolution(categorySegment);
 
   for (const rk of rKeys) {
     for (const ck of cKeys) {
-      const q = await getQuestionByPath(lang, rk, ck, slug, includeHidden);
+      const q = await getQuestionByPath(lang, rk, ck, slug, vis);
       if (q) return { question: q, regionRow };
     }
   }
@@ -271,7 +280,10 @@ export async function resolveArticleDetail(
     .select("*")
     .eq("lang", lang)
     .eq("slug", slug);
-  if (!includeHidden) slugQuery = slugQuery.eq("is_hidden", false);
+  if (!vis.includeHidden) slugQuery = slugQuery.eq("is_hidden", false);
+  if (!vis.includeScheduled) {
+    slugQuery = slugQuery.lte("created_at", publishCutoffIso());
+  }
   const { data, error } = await slugQuery;
 
   if (error) {
@@ -345,7 +357,7 @@ export async function listQuestionAlternatesForUrl(
 
 export async function listQuestionsForLang(
   lang: string,
-  options?: { includeHidden?: boolean; regionSlug?: string }
+  options?: QuestionVisibilityOpts & { regionSlug?: string }
 ): Promise<QuestionRow[]> {
   const sb = getSupabaseOrNull();
   if (!sb) return [];
@@ -355,6 +367,7 @@ export async function listQuestionsForLang(
     .eq("lang", lang)
     .order("created_at", { ascending: false });
   if (!options?.includeHidden) q = q.eq("is_hidden", false);
+  if (!options?.includeScheduled) q = q.lte("created_at", publishCutoffIso());
   const regionSlug = options?.regionSlug?.trim();
   if (regionSlug) q = q.eq("region", regionSlug);
   const { data, error } = await q;
@@ -399,6 +412,7 @@ export async function listRelatedQuestionsForArticle(
     .select("*")
     .eq("lang", lang)
     .eq("is_hidden", false)
+    .lte("created_at", publishCutoffIso())
     .neq("id", excludeQuestionId)
     .order("created_at", { ascending: false })
     .limit(RELATED_QUESTIONS_FETCH_CAP);
@@ -463,7 +477,8 @@ export const loadNavQuestionCategories = cache(
       .from("questions")
       .select("category")
       .eq("lang", lang)
-      .eq("is_hidden", false);
+      .eq("is_hidden", false)
+      .lte("created_at", publishCutoffIso());
     if (error) {
       logSupabase("loadNavQuestionCategories", error);
       return [];

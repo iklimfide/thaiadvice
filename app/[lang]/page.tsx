@@ -10,6 +10,7 @@ import {
   listQuestionsForLang,
   loadRegionsFromSupabase,
 } from "@/lib/data/queries";
+import { masterQuestionVisibility } from "@/lib/data/question-visibility";
 import {
   categoryLabelForLang,
   normalizeQuestionCategorySlug,
@@ -104,7 +105,7 @@ export default async function LangHome({ params, searchParams }: Props) {
   const master = await getMasterUser();
   const [{ regions, error: regionsError }, rawQuestions] = await Promise.all([
     loadRegionsFromSupabase(),
-    listQuestionsForLang(lang, { includeHidden: Boolean(master) }),
+    listQuestionsForLang(lang, masterQuestionVisibility(master)),
   ]);
   const filterCanon =
     categoryFilter.length > 0

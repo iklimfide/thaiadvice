@@ -86,6 +86,7 @@ export function pageMetadata(input: {
    * Yalnızca gerçekten var olan çevirileri verin; uydurma URL eklemeyin.
    */
   languagePaths?: Partial<Record<string, string>>;
+  robots?: Metadata["robots"];
 }): Metadata {
   const title = input.title?.trim() || defaultTitle;
   const description =
@@ -137,6 +138,7 @@ export function pageMetadata(input: {
     title,
     description,
     alternates,
+    ...(input.robots ? { robots: input.robots } : {}),
     openGraph: {
       title,
       description,

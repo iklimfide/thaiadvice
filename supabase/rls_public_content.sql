@@ -65,10 +65,33 @@ CREATE POLICY "public_select_faq_items"
 
 ALTER TABLE public.article_submissions ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "authenticated_insert_article_submissions" ON public.article_submissions;
+DROP POLICY IF EXISTS "anon_insert_article_submissions" ON public.article_submissions;
 DROP POLICY IF EXISTS "public_insert_article_submissions" ON public.article_submissions;
 CREATE POLICY "public_insert_article_submissions"
   ON public.article_submissions FOR INSERT
   TO anon, authenticated
-  WITH CHECK (true);
+  WITH CHECK (
+    status = 'pending'
+    AND category IN (
+      'yemek',
+      'vize',
+      'ulasim',
+      'gece-hayati',
+      'yasam',
+      'para-alisveris',
+      'alisilmadik-durumlar',
+      'saglik',
+      'guvenlik',
+      'kurumsal'
+    )
+    AND char_length(btrim(title)) >= 1
+    AND char_length(title) <= 500
+    AND char_length(btrim(content)) >= 1
+    AND char_length(content) <= 25000
+    AND char_length(btrim(author_alias)) >= 1
+    AND char_length(author_alias) <= 200
+    AND (image_url IS NULL OR char_length(image_url) <= 3000)
+  );
 
 -- Not: SELECT/UPDATE/DELETE submissions için politika yok; moderasyon Supabase Dashboard veya service role ile.

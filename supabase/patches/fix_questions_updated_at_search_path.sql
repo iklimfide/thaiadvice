@@ -1,0 +1,2 @@
+-- Bu dosya birleştirildi: aşağıdakini SQL Editor’de çalıştırın (search_path + RLS).
+-- İçerik: fix_supabase_security_linter.sql

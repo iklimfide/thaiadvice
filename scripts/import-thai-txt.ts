@@ -19,6 +19,11 @@
  * Ortam (.env.local):
  *   NEXT_PUBLIC_SUPABASE_URL
  *   SUPABASE_SERVICE_ROLE_KEY  (önerilir; yoksa anon + RLS insert gerekir)
+ *
+ * İsteğe bağlı yayın zamanı (zamanlanmış yayın — `created_at`):
+ *   STATUS: 2026-04-02 09:00
+ *   (veya PUBLISH_AT / YAYIN_TARIHI) — `YYYY-MM-DD HH:mm` Türkiye saati;
+ *   ISO ile saat dilimi belirtmek de mümkün (`...Z`, `...+03:00`).
  */
 
 import { createClient } from "@supabase/supabase-js";
@@ -26,6 +31,10 @@ import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { normalizeSupabaseProjectUrl } from "../lib/supabase/net";
 import { normalizeQuestionCategorySlug } from "../lib/data/question-categories";
+import {
+  metaPublishAtRaw,
+  parseImportStatusPublishAt,
+} from "../lib/format/parse-import-status-publish-at";
 import { replacePerlamareWithArifGuvenc } from "../lib/format/replace-perlamare-in-text";
 import {
   logImportArticlePageUrl,
@@ -122,6 +131,9 @@ const PLAIN_META_KEYS = new Set([
   "LANGUAGE_CODE",
   "DIL",
   "DIL_KODU",
+  "STATUS",
+  "PUBLISH_AT",
+  "YAYIN_TARIHI",
 ]);
 
 function extractPlainFrontmatter(s: string): { fm: string; body: string } | null {
@@ -353,6 +365,17 @@ async function main() {
       let id: string | null = null;
       if (meta.ID && UUID_RE.test(meta.ID.trim())) id = meta.ID.trim();
 
+      const statusRaw = metaPublishAtRaw(meta);
+      let publishIso: string | null = null;
+      if (statusRaw) {
+        publishIso = parseImportStatusPublishAt(statusRaw);
+        if (!publishIso) {
+          throw new Error(
+            `STATUS / PUBLISH_AT anlaşılamadı: "${statusRaw}" (örn. 2026-04-02 09:00 veya ISO)`
+          );
+        }
+      }
+
       const row = {
         ...(id ? { id } : {}),
         lang: parsed.lang,
@@ -367,6 +390,9 @@ async function main() {
         image_url: imageUrl,
         region,
         related_slugs: [] as string[],
+        ...(publishIso
+          ? { created_at: publishIso, updated_at: publishIso }
+          : {}),
       };
 
       const { error } = await supabase.from("questions").upsert(row, {
@@ -377,7 +403,10 @@ async function main() {
         console.error(`[${i + 1}] Hata (${parsed.slug}):`, error.message);
         fail++;
       } else {
-        console.log(`[${i + 1}] Tamam: ${parsed.slug} (${category}, ${parsed.lang})`);
+        console.log(
+          `[${i + 1}] Tamam: ${parsed.slug} (${category}, ${parsed.lang})` +
+            (publishIso ? ` — yayın: ${publishIso}` : "")
+        );
         logImportArticlePageUrl(parsed.lang, region, category, parsed.slug);
         ok++;
       }

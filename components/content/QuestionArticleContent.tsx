@@ -35,6 +35,8 @@ type Props = {
   siteOrigin: string;
   /** Master çeviri: aynı slug için lang=en satırı var mı (tekrar çeviri uyarısı) */
   hasEnglishTranslation?: boolean;
+  /** Master: yayın tarihi gelecekte — ziyaretçilere kapalı önizleme */
+  scheduledPreview?: boolean;
 };
 
 export function QuestionArticleContent({
@@ -48,6 +50,7 @@ export function QuestionArticleContent({
   relatedQuestions = [],
   siteOrigin,
   hasEnglishTranslation = false,
+  scheduledPreview = false,
 }: Props) {
   const home = lang === "tr" ? "Ana sayfa" : "Home";
   const categoryLabel = matchingSubRegion
@@ -80,12 +83,14 @@ export function QuestionArticleContent({
       lang={lang === "tr" ? "tr" : "en"}
       className="article-detail mx-auto w-full max-w-3xl px-0 sm:px-1"
     >
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(articleJsonLd).replace(/</g, "\\u003c"),
-        }}
-      />
+      {!scheduledPreview ? (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(articleJsonLd).replace(/</g, "\\u003c"),
+          }}
+        />
+      ) : null}
       <Breadcrumbs items={crumbs} pagePath={pagePath} />
       <MasterTranslateBar
         questionId={question.id}
@@ -93,6 +98,26 @@ export function QuestionArticleContent({
         pathname={pagePath}
         hasEnglishTranslation={hasEnglishTranslation}
       />
+      {scheduledPreview ? (
+        <div
+          role="status"
+          className="mb-6 rounded-lg border border-amber-200/90 bg-amber-50/95 px-4 py-3.5 text-sm leading-snug text-amber-950"
+        >
+          {lang === "tr" ? (
+            <>
+              <strong>Zamanlanmış yayın.</strong> Bu makale henüz herkese açık
+              değil; yalnızca siz görüyorsunuz. Yayın tarihi:{" "}
+              <time dateTime={question.created_at}>{publishedStr}</time>.
+            </>
+          ) : (
+            <>
+              <strong>Scheduled.</strong> This article is not public yet. Goes
+              live on{" "}
+              <time dateTime={question.created_at}>{publishedStr}</time>.
+            </>
+          )}
+        </div>
+      ) : null}
       {question.is_hidden ? (
         <div
           role="status"
