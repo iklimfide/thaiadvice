@@ -1,3 +1,4 @@
+import { parseArticleExtraImages } from "@/lib/data/article-extra-images";
 import type {
   FaqEntryRow,
   FaqItemRow,
@@ -94,6 +95,7 @@ export function mapQuestionRow(raw: unknown): QuestionRow {
       r.image_url == null || str(r.image_url) === ""
         ? null
         : str(r.image_url),
+    extra_images: parseArticleExtraImages(r.extra_images),
     media_seo_text:
       r.media_seo_text == null || str(r.media_seo_text) === ""
         ? null

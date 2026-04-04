@@ -22,7 +22,12 @@ function textFromNodes(children: React.ReactNode): string {
   return "";
 }
 
-type Props = {
+type BodyProps = {
+  markdown: string;
+  className?: string;
+};
+
+type ExcerptProps = {
   markdown: string;
   className?: string;
 };
@@ -98,7 +103,44 @@ const markdownComponents: Components = {
   },
 };
 
-export function ArticleMarkdownBody({ markdown, className }: Props) {
+const excerptMarkdownComponents: Components = {
+  ...markdownComponents,
+  p: ({ node: _node, className, ...props }) => (
+    <p
+      className={[
+        "article-detail-excerpt text-pretty text-justify text-lg leading-relaxed text-zinc-700",
+        className,
+      ]
+        .filter(Boolean)
+        .join(" ")}
+      {...props}
+    />
+  ),
+};
+
+/**
+ * Özet (excerpt / snippet): markdown + site içi linkler, gövdeyle aynı `a` stili.
+ */
+export function ArticleMarkdownExcerpt({ markdown, className }: ExcerptProps) {
+  const trimmed = normalizeArticleBodyMarkdown(
+    stripLeadingQuickAnswerBlockFromMarkdown(markdown).trim()
+  );
+  if (!trimmed) return null;
+
+  return (
+    <div className={className} data-article-template="excerpt">
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm, remarkBreaks]}
+        rehypePlugins={[rehypeSanitize]}
+        components={excerptMarkdownComponents}
+      >
+        {trimmed}
+      </ReactMarkdown>
+    </div>
+  );
+}
+
+export function ArticleMarkdownBody({ markdown, className }: BodyProps) {
   const trimmed = normalizeArticleBodyMarkdown(
     stripLeadingQuickAnswerBlockFromMarkdown(markdown).trim()
   );

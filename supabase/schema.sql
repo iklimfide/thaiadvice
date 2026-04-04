@@ -53,6 +53,7 @@ CREATE TABLE IF NOT EXISTS public.questions (
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   updated_at timestamp with time zone NOT NULL DEFAULT now(),
   image_url text,
+  extra_images jsonb NOT NULL DEFAULT '[]'::jsonb,
   media_seo_text text,
   region text NOT NULL DEFAULT 'tayland'::text,
   is_hidden boolean NOT NULL DEFAULT false,

@@ -29,7 +29,8 @@ export function MainNav({ lang, regions, navQuestionCategories }: Props) {
   const destRef = useRef<HTMLDivElement>(null);
   const catRef = useRef<HTMLDivElement>(null);
 
-  const activeCategoryParam = searchParams.get("category")?.trim() ?? "";
+  const activeCategoryParam =
+    searchParams?.get("category")?.trim() ?? "";
   const activeCategoryCanon = activeCategoryParam.length
     ? normalizeQuestionCategorySlug(activeCategoryParam)
     : null;

@@ -1,16 +1,22 @@
 "use server";
 
 import { getMasterUser } from "@/lib/admin/auth-server";
-import { categorySlugForUrl } from "@/lib/data/question-categories";
+import {
+  categoryLabelForLang,
+  categorySlugForUrl,
+  QUESTION_CATEGORY_DEFS,
+} from "@/lib/data/question-categories";
+import { displayRegionTitle } from "@/lib/format/display-names";
 import { getSupabaseServiceRole } from "@/lib/supabase/service";
 
 export type InternalLinkHit = {
   title: string;
   href: string;
+  kind?: "article" | "region" | "category";
 };
 
 /**
- * Master içerik editörü: site içi makale bağlantısı önerileri (mevcut sayfa dili).
+ * Master içerik editörü: site içi bağlantı önerileri — bölgeler, kategori ana sayfası filtreleri, makaleler.
  */
 export async function searchInternalArticleLinks(
   rawQuery: string,
@@ -51,8 +57,47 @@ export async function searchInternalArticleLinks(
     });
   }
 
-  return [...map.values()].slice(0, 18).map((r) => ({
+  const qLower = q.toLowerCase();
+
+  const regionRows = await db.from("regions").select("name,slug").order("slug", { ascending: true });
+  const regionHits: InternalLinkHit[] =
+    regionRows.error || !regionRows.data
+      ? []
+      : (regionRows.data as { name: string | null; slug: string | null }[])
+          .filter((r) => {
+            const name = String(r.name ?? "").toLowerCase();
+            const slug = String(r.slug ?? "").toLowerCase();
+            return name.includes(qLower) || slug.includes(qLower);
+          })
+          .slice(0, 8)
+          .map((r) => {
+            const slug = String(r.slug ?? "").trim();
+            const label = displayRegionTitle(r.name, slug, safeLang);
+            return {
+              title: label,
+              href: `/${safeLang}/${slug}`,
+              kind: "region" as const,
+            };
+          });
+
+  const categoryHits: InternalLinkHit[] = QUESTION_CATEGORY_DEFS.filter((d) => {
+    const slug = d.slug.toLowerCase();
+    const tr = d.labelTr.toLowerCase();
+    const en = d.labelEn.toLowerCase();
+    return slug.includes(qLower) || tr.includes(qLower) || en.includes(qLower);
+  })
+    .slice(0, 8)
+    .map((d) => ({
+      title: categoryLabelForLang(d.slug, safeLang),
+      href: `/${safeLang}?category=${encodeURIComponent(d.slug)}#latest-posts`,
+      kind: "category" as const,
+    }));
+
+  const articleHits: InternalLinkHit[] = [...map.values()].slice(0, 14).map((r) => ({
     title: r.title || r.slug,
     href: `/${r.lang}/${r.region}/${categorySlugForUrl(r.category)}/${r.slug}`,
+    kind: "article" as const,
   }));
+
+  return [...regionHits, ...categoryHits, ...articleHits].slice(0, 24);
 }

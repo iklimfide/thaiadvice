@@ -281,7 +281,11 @@ export function MasterContentTiptap({ initialMarkdown, lang }: Props) {
                   type="search"
                   value={searchQ}
                   onChange={(e) => setSearchQ(e.target.value)}
-                  placeholder="Başlık veya slug…"
+                  placeholder={
+                    lang === "en"
+                      ? "Article, region or category…"
+                      : "Makale, bölge veya kategori…"
+                  }
                   className="w-full rounded border border-zinc-300 bg-white px-2 py-1.5 text-xs"
                 />
                 {searching ? (
@@ -289,13 +293,30 @@ export function MasterContentTiptap({ initialMarkdown, lang }: Props) {
                 ) : hits.length > 0 ? (
                   <ul className="max-h-48 overflow-y-auto text-xs">
                     {hits.map((h) => (
-                      <li key={h.href}>
+                      <li key={`${h.kind ?? "article"}-${h.href}`}>
                         <button
                           type="button"
                           onClick={() => pickHit(h)}
                           className="w-full rounded px-1 py-1.5 text-left hover:bg-violet-100"
                         >
-                          <span className="line-clamp-2 font-medium text-zinc-800">{h.title}</span>
+                          <span className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
+                            {h.kind === "region" ? (
+                              <span className="shrink-0 rounded bg-emerald-100 px-1 py-px text-[9px] font-bold uppercase tracking-wide text-emerald-900">
+                                {lang === "en" ? "Region" : "Bölge"}
+                              </span>
+                            ) : h.kind === "category" ? (
+                              <span className="shrink-0 rounded bg-amber-100 px-1 py-px text-[9px] font-bold uppercase tracking-wide text-amber-900">
+                                {lang === "en" ? "Category" : "Kategori"}
+                              </span>
+                            ) : h.kind === "article" ? (
+                              <span className="shrink-0 rounded bg-zinc-200 px-1 py-px text-[9px] font-bold uppercase tracking-wide text-zinc-700">
+                                {lang === "en" ? "Article" : "Makale"}
+                              </span>
+                            ) : null}
+                            <span className="line-clamp-2 min-w-0 font-medium text-zinc-800">
+                              {h.title}
+                            </span>
+                          </span>
                           <span className="block truncate font-mono text-[10px] text-zinc-500">
                             {h.href}
                           </span>

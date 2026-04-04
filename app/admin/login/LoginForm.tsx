@@ -7,6 +7,7 @@ import { useState } from "react";
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const loginError = searchParams?.get("error") ?? "";
   const [err, setErr] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
@@ -33,14 +34,14 @@ export function LoginForm() {
 
   return (
     <form onSubmit={onSubmit} className="mt-6 space-y-4">
-      {searchParams.get("error") === "config" ? (
+      {loginError === "config" ? (
         <p className="text-sm text-red-600">
           Sunucuda Supabase ortam değişkenleri eksik (
           <code className="rounded bg-zinc-100 px-1">NEXT_PUBLIC_SUPABASE_URL</code> ve
           anon anahtar). Vercel proje ayarlarından ekleyin.
         </p>
       ) : null}
-      {searchParams.get("error") === "forbidden" ? (
+      {loginError === "forbidden" ? (
         <p className="text-sm text-red-600">
           Bu hesap moderasyon yetkisine sahip değil (MASTER_EMAILS).
         </p>

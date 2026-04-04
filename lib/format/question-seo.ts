@@ -37,6 +37,11 @@ export function ogImageAltFromMediaSeo(
 /**
  * Makale sayfası JSON-LD (Article); media_seo_text varsa ImageObject.caption veya hasPart.
  */
+function absoluteQuestionImageUrl(raw: string): string {
+  const imgShort = sitePublicImagePathFromQuestionStorageUrl(raw);
+  return imgShort ? absoluteUrl(imgShort) : raw;
+}
+
 export function questionArticleJsonLd(
   question: QuestionRow,
   pagePath: string
@@ -44,23 +49,36 @@ export function questionArticleJsonLd(
   const path = pagePath.startsWith("/") ? pagePath : `/${pagePath}`;
   const url = absoluteUrl(path);
   const site = getPublicSiteUrl().replace(/\/$/, "");
-  const imgRaw = question.image_url?.trim();
-  const imgShort = imgRaw
-    ? sitePublicImagePathFromQuestionStorageUrl(imgRaw)
-    : null;
-  const img = imgShort ? absoluteUrl(imgShort) : imgRaw;
   const media = question.media_seo_text?.trim();
   const desc =
     question.excerpt?.trim() ||
     undefined;
 
-  let imageField: unknown;
-  if (img) {
-    imageField = {
+  const imageParts: Record<string, unknown>[] = [];
+  const imgRaw = question.image_url?.trim();
+  if (imgRaw) {
+    imageParts.push({
       "@type": "ImageObject",
-      url: img,
+      url: absoluteQuestionImageUrl(imgRaw),
       ...(media ? { caption: media } : {}),
-    };
+    });
+  }
+  for (const ex of question.extra_images ?? []) {
+    const u = ex.url?.trim();
+    if (!u) continue;
+    const cap = ex.alt?.trim();
+    imageParts.push({
+      "@type": "ImageObject",
+      url: absoluteQuestionImageUrl(u),
+      ...(cap ? { caption: cap } : {}),
+    });
+  }
+
+  let imageField: unknown;
+  if (imageParts.length === 1) {
+    imageField = imageParts[0];
+  } else if (imageParts.length > 1) {
+    imageField = imageParts;
   }
 
   const base: Record<string, unknown> = {

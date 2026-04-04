@@ -2,9 +2,15 @@
 
 import { revalidatePath } from "next/cache";
 import {
+  parseArticleExtraImages,
+  isBlogImagesStoragePublicUrl,
+} from "@/lib/data/article-extra-images";
+import {
+  questionExtraImageStorageObjectPath,
   questionHeroStorageObjectPath,
   slugSegmentForStorage,
 } from "@/lib/data/storage-slug";
+import type { ArticleExtraImage } from "@/lib/types/database";
 import { getMasterUser } from "@/lib/admin/auth-server";
 import { ingestRemoteImageAsWebpToStorage } from "@/lib/server/ingest-remote-image";
 import { bufferToWebp } from "@/lib/server/image-webp";
@@ -139,6 +145,123 @@ export async function masterUpdateQuestionField(
   if (error) return { ok: false, message: "Kaydedilemedi." };
   revalidateArticlePaths(pathname, lang);
   return { ok: true, message: "Kaydedildi." };
+}
+
+export async function masterSetQuestionExtraImages(
+  _prev: MasterInlineState,
+  formData: FormData
+): Promise<MasterInlineState> {
+  const user = await getMasterUser();
+  if (!user) return { ok: false, message: "Yetkisiz." };
+
+  const id = String(formData.get("id") ?? "").trim();
+  const pathname = String(formData.get("pathname") ?? "/").trim() || "/";
+  const lang = String(formData.get("lang") ?? "").trim();
+  const slugHint = String(formData.get("storage_slug") ?? "").trim();
+  const raw = String(formData.get("value") ?? "").trim();
+
+  if (!id) return { ok: false, message: "Geçersiz istek." };
+
+  let parsed: unknown;
+  try {
+    parsed = raw === "" ? [] : JSON.parse(raw);
+  } catch {
+    return { ok: false, message: "Geçersiz JSON." };
+  }
+
+  const normalized = parseArticleExtraImages(parsed);
+  const db = getSupabaseServiceRole();
+  const { data: row } = await db
+    .from("questions")
+    .select("slug")
+    .eq("id", id)
+    .single();
+  const slugBase = slugHint || row?.slug || id;
+
+  const ingested: ArticleExtraImage[] = [];
+  for (const item of normalized) {
+    let url = item.url.trim();
+    if (!url) continue;
+    if (
+      /^https?:\/\//i.test(url) &&
+      !isBlogImagesStoragePublicUrl(url)
+    ) {
+      const ing = await ingestRemoteImageAsWebpToStorage(
+        db,
+        url,
+        questionExtraImageStorageObjectPath(slugBase)
+      );
+      if ("error" in ing) return { ok: false, message: ing.error };
+      url = ing.publicUrl;
+    }
+    ingested.push({
+      url,
+      ...(item.alt ? { alt: item.alt } : {}),
+    });
+  }
+
+  const { error } = await db
+    .from("questions")
+    .update({ extra_images: ingested })
+    .eq("id", id);
+
+  if (error) return { ok: false, message: "Kaydedilemedi." };
+  revalidateArticlePaths(pathname, lang);
+  return { ok: true, message: "Ek görseller kaydedildi." };
+}
+
+export type UploadQuestionExtraImageState = {
+  ok: boolean;
+  url?: string;
+  message?: string;
+};
+
+export async function uploadQuestionExtraImageFile(
+  formData: FormData
+): Promise<UploadQuestionExtraImageState> {
+  const user = await getMasterUser();
+  if (!user) return { ok: false, message: "Yetkisiz." };
+
+  const id = String(formData.get("id") ?? "").trim();
+  const slugRaw = String(formData.get("slug") ?? "").trim();
+  const file = formData.get("file");
+  if (!id) return { ok: false, message: "Geçersiz istek." };
+  if (!(file instanceof File) || file.size === 0) {
+    return { ok: false, message: "Dosya seçin." };
+  }
+  if (file.size > MAX_BYTES) {
+    return { ok: false, message: "En fazla 5 MB." };
+  }
+  if (!ALLOWED_IMAGE.includes(file.type as (typeof ALLOWED_IMAGE)[number])) {
+    return { ok: false, message: "Yalnız JPEG, PNG, WebP veya GIF." };
+  }
+
+  const db = getSupabaseServiceRole();
+  const path = questionExtraImageStorageObjectPath(slugRaw || id);
+  let webp: Buffer;
+  try {
+    webp = await bufferToWebp(Buffer.from(await file.arrayBuffer()));
+  } catch (e) {
+    console.error(e);
+    return {
+      ok: false,
+      message: "Görsel WebP’ye çevrilemedi; dosya bozuk olabilir.",
+    };
+  }
+  const { error: upErr } = await db.storage
+    .from("blog-images")
+    .upload(path, webp, { contentType: "image/webp", upsert: false });
+
+  if (upErr) {
+    console.error(upErr);
+    return {
+      ok: false,
+      message: "Storage yüklemesi başarısız (blog-images bucket).",
+    };
+  }
+
+  const { data: pub } = db.storage.from("blog-images").getPublicUrl(path);
+  return { ok: true, url: pub.publicUrl, message: "Yüklendi." };
 }
 
 export async function masterUpdateQuestionRelatedSlugs(

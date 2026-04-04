@@ -1,8 +1,13 @@
 import { Fragment } from "react";
 import { MasterEditable } from "@/components/admin/MasterEditable";
 import { MasterTranslateBar } from "@/components/admin/MasterTranslateBar";
+import { MasterArticleExtraImages } from "@/components/admin/MasterArticleExtraImages";
+import { ArticleAuthorSignature } from "@/components/content/ArticleAuthorSignature";
 import { ArticleShareFooter } from "@/components/content/ArticleShareFooter";
-import { ArticleMarkdownBody } from "@/components/content/ArticleMarkdownBody";
+import {
+  ArticleMarkdownBody,
+  ArticleMarkdownExcerpt,
+} from "@/components/content/ArticleMarkdownBody";
 import { RelatedArticlesBelowDetail } from "@/components/content/RelatedBelowDetail";
 import { SafeHeroImageBox } from "@/components/ui/SafeImage";
 import { FaqSection } from "@/components/faq/FaqSection";
@@ -14,12 +19,19 @@ import {
 } from "@/lib/data/question-categories";
 import { formatPostDate } from "@/lib/format/date";
 import { displayRegionTitle } from "@/lib/format/display-names";
-import { stripQuickAnswerPrefix } from "@/lib/format/faq-display";
 import { questionArticleJsonLd } from "@/lib/format/question-seo";
 import type { FaqEntryRow } from "@/lib/types/database";
 import type { QuestionRow } from "@/lib/types/database";
 import type { RegionRow } from "@/lib/types/database";
 import type { SubRegionRow } from "@/lib/types/database";
+
+function isArifGuvenecAboutArticle(q: QuestionRow): boolean {
+  return (
+    q.slug === "arif-guvenc-kimdir" &&
+    q.region.trim().toLowerCase() === "genel" &&
+    categorySlugForUrl(q.category) === "kurumsal"
+  );
+}
 
 type Props = {
   lang: string;
@@ -201,9 +213,7 @@ export function QuestionArticleContent({
         >
           {question.excerpt?.trim() ? (
             <div className="rounded-xl border border-brand/15 bg-gradient-to-br from-brand/[0.06] via-white to-violet-50/40 px-4 py-4 sm:px-5 sm:py-5">
-              <p className="article-detail-excerpt text-pretty text-justify text-lg leading-relaxed text-zinc-700">
-                {stripQuickAnswerPrefix(question.excerpt)}
-              </p>
+              <ArticleMarkdownExcerpt markdown={question.excerpt} />
             </div>
           ) : null}
         </MasterEditable>
@@ -259,6 +269,20 @@ export function QuestionArticleContent({
           />
         </div>
       </MasterEditable>
+
+      <MasterArticleExtraImages
+        questionId={question.id}
+        slug={question.slug}
+        lang={lang}
+        pathname={pagePath}
+        initialImages={question.extra_images}
+      />
+
+      {!isArifGuvenecAboutArticle(question) ? (
+        <div className="mt-6 w-full max-w-3xl sm:mt-8">
+          <ArticleAuthorSignature lang={lang} />
+        </div>
+      ) : null}
 
       <ArticleShareFooter
         shareUrl={shareUrl}

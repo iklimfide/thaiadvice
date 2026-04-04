@@ -72,9 +72,9 @@ export function MasterEditable({
   const pathname = usePathname();
   const params = useParams();
   const lang =
-    typeof params.lang === "string" ? params.lang : "tr";
+    params && typeof params.lang === "string" ? params.lang : "tr";
   const routeSlug =
-    typeof params.slug === "string" ? params.slug : "";
+    params && typeof params.slug === "string" ? params.slug : "";
   const slugForStorage =
     storageSlug?.trim() || routeSlug || id.replace(/-/g, "").slice(0, 12);
   const [open, setOpen] = useState(false);

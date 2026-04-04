@@ -1,5 +1,6 @@
 import { Fragment } from "react";
 import { MasterEditable } from "@/components/admin/MasterEditable";
+import { ArticleAuthorSignature } from "@/components/content/ArticleAuthorSignature";
 import { ArticleMarkdownBody } from "@/components/content/ArticleMarkdownBody";
 import { RelatedPlacesBelowDetail } from "@/components/content/RelatedBelowDetail";
 import { SafeHeroImageBox } from "@/components/ui/SafeImage";
@@ -156,6 +157,10 @@ export function PlaceDetailContent({
           </div>
         ) : null}
       </MasterEditable>
+
+      <div className="mt-6 w-full max-w-3xl sm:mt-8">
+        <ArticleAuthorSignature lang={lang} />
+      </div>
 
       <FaqSection items={faq} detailLayout />
     </article>

@@ -1,5 +1,11 @@
 /** Veritabanı şemasıyla birebir uyum (public.*). */
 
+/** `questions.extra_images` öğesi — kapak dışı galeri */
+export type ArticleExtraImage = {
+  url: string;
+  alt?: string;
+};
+
 export type RegionRow = {
   id: string;
   name: string;
@@ -43,6 +49,8 @@ export type QuestionRow = {
   /** Son güncelleme; DB’de yoksa map satırında created_at ile doldurulur */
   updated_at: string;
   image_url: string | null;
+  /** Kapak dışı görseller (detay galerisi) */
+  extra_images: ArticleExtraImage[];
   /** Görsel/alt metin notları; gövdede gösterilmez, SEO için */
   media_seo_text: string | null;
   region: string;

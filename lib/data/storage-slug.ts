@@ -20,3 +20,11 @@ export function questionHeroStorageObjectPath(slugOrFallback: string): string {
   const slugPart = slugSegmentForStorage(slugOrFallback);
   return `questions/${slugPart}/${slugPart}-${Date.now()}.webp`;
 }
+
+/** Makale ek görselleri — kapak dosya adından ayrı `extra-` öneki */
+export function questionExtraImageStorageObjectPath(
+  slugOrFallback: string
+): string {
+  const slugPart = slugSegmentForStorage(slugOrFallback);
+  return `questions/${slugPart}/extra-${Date.now()}.webp`;
+}

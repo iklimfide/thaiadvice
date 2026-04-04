@@ -66,6 +66,7 @@ export async function upsertEnglishFromTurkishQuestion(
     excerpt: enExcerpt,
     author: q.author,
     image_url: q.image_url,
+    extra_images: q.extra_images,
     media_seo_text: enMedia,
     region: q.region,
     related_slugs: q.related_slugs,
