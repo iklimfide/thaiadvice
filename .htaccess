@@ -1,0 +1,13 @@
+# ThaiAdvice — tek kanonik adres: https://www.thaiadvice.com/
+# Yalnızca Host tam olarak www.thaiadvice.com VE HTTPS ise dur; diğer tüm varyantlar
+# (http, apex, www.www, vb.) tek 301 ile kanona gider — çift www oluşturacak kural yok.
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  RewriteCond %{HTTP_HOST} ^www\.thaiadvice\.com$ [NC]
+  RewriteCond %{HTTPS} =on
+  RewriteRule ^ - [L]
+
+  RewriteRule ^ https://www.thaiadvice.com%{REQUEST_URI} [R=301,L,QSA]
+</IfModule>
