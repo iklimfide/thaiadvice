@@ -36,11 +36,14 @@ export async function middleware(request: NextRequest) {
 
   const path = request.nextUrl.pathname;
   if (path === "/admin" || path === "/admin/") {
-    return NextResponse.redirect(new URL("/admin/moderation", request.url));
+    return NextResponse.redirect(
+      new URL("/admin/moderation", request.url),
+      308
+    );
   }
 
   if (path.startsWith("/admin/moderation") && !user) {
-    return NextResponse.redirect(new URL("/admin/login", request.url));
+    return NextResponse.redirect(new URL("/admin/login", request.url), 302);
   }
 
   return supabaseResponse;

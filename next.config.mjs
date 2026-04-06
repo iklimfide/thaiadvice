@@ -1,5 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  /** App Router rotaları slashsız (`/tr`, `/tr/...`); `true` olsaydı her istekte ek yönlendirme riski. */
+  trailingSlash: false,
   experimental: {
     // sharp + supabase: webpack vendor-chunks (özellikle Windows’ta) bazen
     // diske yazılmadan runtime manifest güncellenir → MODULE_NOT_FOUND @supabase.js
@@ -32,7 +34,7 @@ const nextConfig = {
       {
         source: "/favicon.ico",
         destination: "/icon.png",
-        permanent: false,
+        permanent: true,
       },
       /** Eski / yanlış URL: guides ayrı route değil; bölge slug'ı sanılıp 404 oluyordu. */
       {
