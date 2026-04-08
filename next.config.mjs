@@ -53,14 +53,13 @@ const nextConfig = {
         destination: "/en",
         permanent: true,
       },
-      /** Tayland hub / eski alt yollar → dil ana sayfası. */
+      /**
+       * Hub yalnızca tam path (301 → dil ana sayfası).
+       * `/tr/tayland/:path*` veya `/en/tayland/:path*` EKLEME: `tayland` bölge slug’ı ile
+       * `/tr/tayland/kategori/makale` ve `/en/tayland/...` gerçek makale URL’leri vardır.
+       */
       {
         source: "/tr/tayland",
-        destination: "/tr",
-        permanent: true,
-      },
-      {
-        source: "/tr/tayland/:path*",
         destination: "/tr",
         permanent: true,
       },
