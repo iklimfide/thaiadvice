@@ -7,10 +7,12 @@ import { RibbonHeading } from "@/components/home/RibbonHeading";
 import { RegionsListing } from "@/components/home/RegionsListing";
 import { filterQuestionsByTextQuery } from "@/lib/data/question-search";
 import {
+  fetchEnglishQuestionTranslationKeys,
   listQuestionsForLang,
   loadRegionsFromSupabase,
 } from "@/lib/data/queries";
 import { masterQuestionVisibility } from "@/lib/data/question-visibility";
+import { sortTurkishQuestionsWithMissingEnglishFirst } from "@/lib/data/question-translation";
 import {
   categoryLabelForLang,
   normalizeQuestionCategorySlug,
@@ -103,10 +105,15 @@ export default async function LangHome({ params, searchParams }: Props) {
         : "";
 
   const master = await getMasterUser();
-  const [{ regions, error: regionsError }, rawQuestions] = await Promise.all([
-    loadRegionsFromSupabase(),
-    listQuestionsForLang(lang, masterQuestionVisibility(master)),
-  ]);
+  const needsEnSort = Boolean(master) && lang === "tr";
+  const [{ regions, error: regionsError }, rawQuestions, enKeys] =
+    await Promise.all([
+      loadRegionsFromSupabase(),
+      listQuestionsForLang(lang, masterQuestionVisibility(master)),
+      needsEnSort
+        ? fetchEnglishQuestionTranslationKeys()
+        : Promise.resolve(null as Set<string> | null),
+    ]);
   const filterCanon =
     categoryFilter.length > 0
       ? normalizeQuestionCategorySlug(categoryFilter)
@@ -127,8 +134,13 @@ export default async function LangHome({ params, searchParams }: Props) {
       ? excludeCorporateAboutFromLatestGrid(afterCategory)
       : afterCategory;
 
+  const forListingSorted =
+    needsEnSort && enKeys
+      ? sortTurkishQuestionsWithMissingEnglishFirst(forListing, enKeys)
+      : forListing;
+
   const questions = filterQuestionsByTextQuery(
-    forListing,
+    forListingSorted,
     searchQuery,
     lang
   );

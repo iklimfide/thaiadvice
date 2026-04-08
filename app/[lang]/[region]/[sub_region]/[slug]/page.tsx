@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { PlaceDetailContent } from "@/components/content/PlaceDetailContent";
 import { QuestionArticleContent } from "@/components/content/QuestionArticleContent";
 import { categorySlugForUrl } from "@/lib/data/question-categories";
@@ -37,6 +37,20 @@ type SlugRouteParams = {
 type Props = {
   params: Promise<SlugRouteParams> | SlugRouteParams;
 };
+
+function articleCanonicalPath(
+  lang: string,
+  q: { region: string; category: string; slug: string }
+): string {
+  return `/${lang}/${q.region}/${categorySlugForUrl(q.category)}/${q.slug}`;
+}
+
+/** Eski kategori/bölge segmenti veya büyük-küçük harf farkı — adres çubuğunu DB kanonuna çeker. */
+function articlePathsEquivalent(a: string, b: string): boolean {
+  const norm = (p: string) =>
+    p.replace(/\/+/g, "/").replace(/\/$/, "").toLowerCase();
+  return norm(a) === norm(b);
+}
 
 function metaDescriptionFromIntro(ai: string): string | null {
   const t = ai.trim();
@@ -79,6 +93,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   );
   if (resolved) {
     const q = resolved.question;
+    const canonicalPath = articleCanonicalPath(lang, q);
+    const requestedPath = `/${lang}/${regionSlug}/${subSlug}/${slug}`;
+    if (!articlePathsEquivalent(requestedPath, canonicalPath)) {
+      permanentRedirect(canonicalPath);
+    }
     const scheduledPreview =
       Boolean(master) && isQuestionScheduledForPublish(q);
     const hasImg = Boolean(q.image_url?.trim());
@@ -91,8 +110,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         : hasImg
           ? q.image_url!.trim()
           : null;
-    const cat = categorySlugForUrl(q.category);
-    const canonicalPath = `/${lang}/${q.region}/${cat}/${q.slug}`;
     const variants = await listQuestionAlternatesForUrl(
       regionSlug,
       subSlug,
@@ -168,12 +185,17 @@ export default async function RegionCategorySlugPage({ params }: Props) {
     masterQuestionVisibility(master)
   );
   if (resolved) {
+    const q = resolved.question;
+    const articlePath = articleCanonicalPath(lang, q);
+    const requestedPath = `/${lang}/${regionSlug}/${subSlug}/${slug}`;
+    if (!articlePathsEquivalent(requestedPath, articlePath)) {
+      permanentRedirect(articlePath);
+    }
     const displayRegion: RegionRow =
       resolved.regionRow ?? virtualRegionFromQuestion(resolved.question);
     const matchingSub = resolved.regionRow
       ? await getSubRegionBySlug(resolved.regionRow.id, subSlug)
       : null;
-    const q = resolved.question;
     const scheduledPreview =
       Boolean(master) && isQuestionScheduledForPublish(q);
     const [faq, relatedQuestions] = await Promise.all([
@@ -188,7 +210,6 @@ export default async function RegionCategorySlugPage({ params }: Props) {
       ),
     ]);
     const siteOrigin = getPublicSiteUrl();
-    const articlePath = `/${lang}/${q.region}/${categorySlugForUrl(q.category)}/${q.slug}`;
     const regionBreadcrumbHref =
       resolved.regionRow != null
         ? `/${lang}/${resolved.regionRow.slug}`

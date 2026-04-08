@@ -47,6 +47,49 @@ const nextConfig = {
         destination: "/en",
         permanent: true,
       },
+      /** Tekil mekân sayfası ana sayfaya taşındı / kaldırıldı. */
+      {
+        source: "/en/pattaya/walking-street/ocean-beats-club",
+        destination: "/en",
+        permanent: true,
+      },
+      /** Tayland hub / eski alt yollar → dil ana sayfası. */
+      {
+        source: "/tr/tayland",
+        destination: "/tr",
+        permanent: true,
+      },
+      {
+        source: "/tr/tayland/:path*",
+        destination: "/tr",
+        permanent: true,
+      },
+      {
+        source: "/tr/thailand",
+        destination: "/tr",
+        permanent: true,
+      },
+      {
+        source: "/en/thailand",
+        destination: "/en",
+        permanent: true,
+      },
+      {
+        source: "/en/tayland",
+        destination: "/en",
+        permanent: true,
+      },
+      /** TR `genel` slug’ı EN dilinde ana sayfaya. */
+      {
+        source: "/en/genel",
+        destination: "/en",
+        permanent: true,
+      },
+      {
+        source: "/en/genel/:path*",
+        destination: "/en",
+        permanent: true,
+      },
     ];
   },
   /**

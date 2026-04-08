@@ -14,6 +14,7 @@ import {
   mapRegionRow,
   mapSubRegionRow,
 } from "@/lib/data/map-rows";
+import { questionTranslationKey } from "@/lib/data/question-translation";
 import {
   publishCutoffIso,
   type QuestionVisibilityOpts,
@@ -386,6 +387,43 @@ export async function listQuestionsForLang(
     );
   }
   return rows.map(mapQuestionRow);
+}
+
+/** lang=en satırlarının region+category+slug anahtarları (TR çeviri eksik sıralaması için). */
+export async function fetchEnglishQuestionTranslationKeys(): Promise<
+  Set<string> | null
+> {
+  const sb = getSupabaseOrNull();
+  if (!sb) return null;
+  const keys = new Set<string>();
+  const pageSize = 500;
+  let from = 0;
+  for (;;) {
+    const { data, error } = await sb
+      .from("questions")
+      .select("region,category,slug")
+      .eq("lang", "en")
+      .range(from, from + pageSize - 1);
+    if (error) {
+      logSupabase("fetchEnglishQuestionTranslationKeys", error);
+      return null;
+    }
+    const rows = data ?? [];
+    for (const raw of rows) {
+      const r = raw as { region?: string; category?: string; slug?: string };
+      if (!r.region || !r.category || !r.slug) continue;
+      keys.add(
+        questionTranslationKey({
+          region: String(r.region),
+          category: String(r.category),
+          slug: String(r.slug),
+        })
+      );
+    }
+    if (rows.length < pageSize) break;
+    from += pageSize;
+  }
+  return keys;
 }
 
 const RELATED_QUESTIONS_FETCH_CAP = 150;

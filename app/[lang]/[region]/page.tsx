@@ -9,11 +9,13 @@ import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { SectionTitle } from "@/components/ui/SectionTitle";
 import { getMasterUser } from "@/lib/admin/auth-server";
 import {
+  fetchEnglishQuestionTranslationKeys,
   getRegionBySlug,
   listFaqByCategory,
   listQuestionsForLang,
   listSubRegionsForRegion,
 } from "@/lib/data/queries";
+import { sortTurkishQuestionsWithMissingEnglishFirst } from "@/lib/data/question-translation";
 import { masterQuestionVisibility } from "@/lib/data/question-visibility";
 import { displayRegionTitle } from "@/lib/format/display-names";
 import { pageMetadata } from "@/lib/metadata/site";
@@ -56,14 +58,22 @@ export default async function RegionPage({ params }: Props) {
   if (!region) notFound();
 
   const master = await getMasterUser();
-  const [subs, faq, regionQuestions] = await Promise.all([
+  const needsEnSort = Boolean(master) && lang === "tr";
+  const [subs, faq, regionQuestions, enKeys] = await Promise.all([
     listSubRegionsForRegion(region.id),
     listFaqByCategory(region.slug),
     listQuestionsForLang(lang, {
       ...masterQuestionVisibility(master),
       regionSlug: region.slug,
     }),
+    needsEnSort
+      ? fetchEnglishQuestionTranslationKeys()
+      : Promise.resolve(null as Set<string> | null),
   ]);
+  const displayRegionQuestions =
+    needsEnSort && enKeys
+      ? sortTurkishQuestionsWithMissingEnglishFirst(regionQuestions, enKeys)
+      : regionQuestions;
 
   const home = lang === "tr" ? "Ana sayfa" : "Home";
   const regionTitle = displayRegionTitle(region.name, region.slug, lang);
@@ -94,11 +104,11 @@ export default async function RegionPage({ params }: Props) {
           {questionsTitle}
         </h2>
         <SectionTitle className="mb-4">{questionsTitle}</SectionTitle>
-        {regionQuestions.length === 0 ? (
+        {displayRegionQuestions.length === 0 ? (
           <p className="text-center text-sm text-zinc-500">{emptyQuestions}</p>
         ) : (
           <ul className="mx-auto grid w-full max-w-xl grid-cols-1 gap-8 md:max-w-none md:grid-cols-2 md:gap-8 xl:grid-cols-3">
-            {regionQuestions.map((q) => (
+            {displayRegionQuestions.map((q) => (
               <li key={q.id} className="min-w-0">
                 <PostCard lang={lang} question={q} />
               </li>
