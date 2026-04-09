@@ -120,6 +120,11 @@ export function QuestionArticleContent({
               <strong>Zamanlanmış yayın.</strong> Bu makale henüz herkese açık
               değil; yalnızca siz görüyorsunuz. Yayın tarihi:{" "}
               <time dateTime={question.created_at}>{publishedStr}</time>.
+              {!hasEnglishTranslation ? (
+                <div className="mt-2 font-semibold text-red-700">
+                  Makalenin çevirisi henüz yapılmadı.
+                </div>
+              ) : null}
             </>
           ) : (
             <>
