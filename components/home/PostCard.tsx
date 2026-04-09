@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { MasterEditable } from "@/components/admin/MasterEditable";
+import { useMaster } from "@/components/admin/MasterContext";
 import { SafeImage } from "@/components/ui/SafeImage";
 import {
   categoryLabelForLang,
@@ -12,14 +14,22 @@ import {
   stripLeadingQuickAnswerBlockFromMarkdown,
   stripQuickAnswerPrefix,
 } from "@/lib/format/faq-display";
+import { translateQuestionToEnglish } from "@/lib/actions/translate-question";
 import type { QuestionRow } from "@/lib/types/database";
+import { useState, useTransition } from "react";
 
 type Props = {
   lang: string;
   question: QuestionRow;
+  /** Master TR listelerinde: EN çeviri satırı yoksa true */
+  missingEnglishTranslation?: boolean;
 };
 
-export function PostCard({ lang, question }: Props) {
+export function PostCard({ lang, question, missingEnglishTranslation }: Props) {
+  const { isMaster } = useMaster();
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  const [translateError, setTranslateError] = useState<string | null>(null);
   const catSeg = categorySlugForUrl(question.category);
   const href = `/${lang}/${question.region}/${catSeg}/${question.slug}`;
   const categoryDisplay = categoryLabelForLang(question.category, lang);
@@ -64,6 +74,35 @@ export function PostCard({ lang, question }: Props) {
           {tr
             ? "Zamanlandı — yayın tarihinde herkese açılır"
             : "Scheduled — goes public on date shown"}
+          {tr && isMaster && missingEnglishTranslation ? (
+            <span className="mt-1 block font-semibold normal-case tracking-normal text-red-700">
+              Makalenin çevirisi henüz yapılmadı.{" "}
+              <button
+                type="button"
+                disabled={pending}
+                className="ml-1 inline-flex items-center rounded-md border border-red-300/80 bg-white/70 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-red-800 hover:bg-white disabled:opacity-60"
+                onClick={() => {
+                  setTranslateError(null);
+                  startTransition(async () => {
+                    const r = await translateQuestionToEnglish(question.id, href);
+                    if (r.ok && r.enPath) {
+                      router.push(r.enPath);
+                      router.refresh();
+                    } else {
+                      setTranslateError(r.message ?? "Çeviri başarısız.");
+                    }
+                  });
+                }}
+              >
+                {pending ? "Çevriliyor…" : "Çevir"}
+              </button>
+            </span>
+          ) : null}
+        </p>
+      ) : null}
+      {tr && isMaster && translateError ? (
+        <p className="mb-4 rounded-lg bg-red-100/90 px-3 py-2 text-center text-[11px] font-semibold text-red-900">
+          {translateError}
         </p>
       ) : null}
 

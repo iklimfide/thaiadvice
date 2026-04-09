@@ -23,6 +23,7 @@ import { SiteJsonLd } from "@/components/seo/SiteJsonLd";
 import { pageMetadata } from "@/lib/metadata/site";
 import { resolveRouteArg } from "@/lib/next/resolve-route-args";
 import { SITE_LANGS } from "@/lib/seo/site-languages";
+import { questionTranslationKey } from "@/lib/data/question-translation";
 
 export const dynamic = "force-dynamic";
 
@@ -204,7 +205,15 @@ export default async function LangHome({ params, searchParams }: Props) {
             <ul className="mx-auto grid w-full max-w-xl grid-cols-1 gap-8 md:max-w-none md:grid-cols-2 md:gap-8 xl:grid-cols-3">
               {questions.map((q) => (
                 <li key={q.id} className="min-w-0">
-                  <PostCard lang={lang} question={q} />
+                  <PostCard
+                    lang={lang}
+                    question={q}
+                    missingEnglishTranslation={
+                      needsEnSort && enKeys
+                        ? !enKeys.has(questionTranslationKey(q))
+                        : false
+                    }
+                  />
                 </li>
               ))}
             </ul>

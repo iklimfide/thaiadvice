@@ -15,7 +15,10 @@ import {
   listQuestionsForLang,
   listSubRegionsForRegion,
 } from "@/lib/data/queries";
-import { sortTurkishQuestionsWithMissingEnglishFirst } from "@/lib/data/question-translation";
+import {
+  questionTranslationKey,
+  sortTurkishQuestionsWithMissingEnglishFirst,
+} from "@/lib/data/question-translation";
 import { masterQuestionVisibility } from "@/lib/data/question-visibility";
 import { displayRegionTitle } from "@/lib/format/display-names";
 import { pageMetadata } from "@/lib/metadata/site";
@@ -110,7 +113,15 @@ export default async function RegionPage({ params }: Props) {
           <ul className="mx-auto grid w-full max-w-xl grid-cols-1 gap-8 md:max-w-none md:grid-cols-2 md:gap-8 xl:grid-cols-3">
             {displayRegionQuestions.map((q) => (
               <li key={q.id} className="min-w-0">
-                <PostCard lang={lang} question={q} />
+                <PostCard
+                  lang={lang}
+                  question={q}
+                  missingEnglishTranslation={
+                    needsEnSort && enKeys
+                      ? !enKeys.has(questionTranslationKey(q))
+                      : false
+                  }
+                />
               </li>
             ))}
           </ul>
